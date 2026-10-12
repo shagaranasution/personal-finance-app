@@ -1,0 +1,17 @@
+{
+  "name": "personal-finance-app",
+  "version": "0.0.0",
+  "private": true,
+  "packageManager": "npm@11.6.2",
+  "engines": {
+    "node": ">=22.12.0",
+    "npm": ">=11 <12"
+  },
+  "workspaces": ["apps/web"],
+  "scripts": {
+    "dev": "npm run dev --workspace @personal-finance/web",
+    "build": "npm run build --workspace @personal-finance/web",
+    "typecheck": "npm run typecheck --workspace @personal-finance/web",
+    "preview": "npm run preview --workspace @personal-finance/web"
+  }
+}
