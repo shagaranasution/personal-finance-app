@@ -1,0 +1,16 @@
+# Dependencies and generated output
+node_modules/
+apps/*/node_modules/
+apps/*/dist/
+coverage/
+
+# Copied binary assets
+apps/web/public/assets/
+
+# Lockfile: format package manifests, not generated resolution data
+package-lock.json
+
+# Environment files
+.env
+.env.*
+!.env.example
