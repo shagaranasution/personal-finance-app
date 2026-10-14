@@ -30,4 +30,4 @@ jobs:
         run: npm ci
 
       - name: Run quality checks
-        run: npm check
+        run: npm run check
