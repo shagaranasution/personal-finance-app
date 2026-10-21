@@ -14,7 +14,7 @@ export default defineConfig([
   ]),
 
   {
-    files: ['apps/web/src/**/*.{ts, tsx}'],
+    files: ['apps/web/src/**/*.{ts,tsx}'],
 
     extends: [
       js.configs.recommended,
