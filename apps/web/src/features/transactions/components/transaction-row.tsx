@@ -17,7 +17,8 @@ const amountFormatter = new Intl.NumberFormat('en-US', {
 })
 
 function formatAmount(amount: number) {
-  const signedAmount = amount > 0 ? `+${amountFormatter.format(amount)}` : amountFormatter.format(amount)
+  const signedAmount =
+    amount > 0 ? `+${amountFormatter.format(amount)}` : amountFormatter.format(amount)
   return signedAmount.replace('-', '−')
 }
 
