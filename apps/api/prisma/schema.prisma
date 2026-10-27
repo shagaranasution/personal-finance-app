@@ -1,0 +1,12 @@
+generator client {
+  provider = "prisma-client"
+  output = "../src/generated/prisma"
+  moduleFormat = "esm"
+}
+
+datasource db {
+  provider = "postgresql"
+  schemas = ["finance"]
+}
+
+// Ownership, balance snapshots, and pots arrive in FIN-07.

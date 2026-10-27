@@ -10,9 +10,20 @@ export default defineConfig([
     '**/node_modules/**',
     '**/dist/**',
     '**/coverage/**',
+    'apps/api/src/generated/**',
     'apps/web/public/assets/**',
   ]),
 
+  {
+    files: ['apps/api/test/**/*.mjs'],
+    extends: [js.configs.recommended],
+    languageOptions: { globals: globals.node },
+  },
+  {
+    files: ['apps/api/src/**/*.ts', 'apps/api/prisma.config.ts'],
+    extends: [js.configs.recommended, tseslint.configs.recommended],
+    languageOptions: { globals: globals.node },
+  },
   {
     files: ['apps/web/src/**/*.{ts,tsx}'],
 

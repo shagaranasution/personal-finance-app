@@ -1,0 +1,38 @@
+{
+  "name": "@personal-finance/api",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "npm run build && concurrently --kill-others \"tsc --watch --preserveWatchOutput\" \"node --watch dist/main.js\"",
+    "start": "node dist/main.js",
+    "generate": "prisma generate",
+    "build": "npm run generate && tsc",
+    "typecheck": "npm run generate && tsc --noEmit",
+    "db:migrate": "prisma migrate deploy",
+    "db:migrate:dev": "prisma migrate dev",
+    "db:status": "prisma migrate status",
+    "test": "npm run build && node --test test/*.test.mjs"
+  },
+  "dependencies": {
+    "@nestjs/common": "^12.2.0",
+    "@nestjs/core": "^12.2.0",
+    "@nestjs/platform-express": "^12.2.0",
+    "@prisma/adapter-pg": "7.10.1",
+    "@prisma/client": "7.10.1",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.15.1",
+    "dotenv": "^17.2.3",
+    "pg": "^8.16.3",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.2"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^25.0.0",
+    "@types/pg": "^8.15.6",
+    "concurrently": "^10.0.6",
+    "prisma": "7.10.1",
+    "typescript": "7.0.2"
+  },
+  "type": "module"
+}

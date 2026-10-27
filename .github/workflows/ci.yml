@@ -15,6 +15,24 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: finance
+          POSTGRES_PASSWORD: ci_only_password
+          POSTGRES_DB: finance
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U finance -d finance"
+          --health-interval 2s
+          --health-timeout 5s
+          --health-retries 15
+
+    env:
+      DATABASE_URL: postgresql://finance:ci_only_password@127.0.0.1:5432/finance?schema=finance
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -22,7 +40,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node_version: 4
+          node-version: '24'
           cache: npm
           cache-dependency-path: package-lock.json
 
@@ -31,3 +49,9 @@ jobs:
 
       - name: Run quality checks
         run: npm run check
+
+      - name: Apply database migrations
+        run: npm run db:migrate
+
+      - name: API integration tests
+        run: npm run test:api

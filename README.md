@@ -1,58 +1,109 @@
 # Personal Finance App
 
-A learning project based on the Frontend Mentor personal finance challenge. FIN-02 provides the frontend scaffold: React, TypeScript, Vite, Tailwind CSS, and npm workspaces. Feature implementation starts in the later cards.
+A learning project based on the Frontend Mentor personal finance challenge. The frontend uses React, TypeScript, Vite, and Tailwind; the local API uses NestJS, Prisma, and PostgreSQL.
 
 ## Run locally
 
-Run commands from this repository's root:
+Use npm 11 and Node.js 24 LTS (CI uses Node 24). This checkout was also verified with Node 25.1.0 and npm 11.6.2. Docker Desktop must be running for PostgreSQL. Run commands from the repository root:
 
 ```sh
 npm ci
+cp apps/api/.env.example apps/api/.env
+npm run db:up
+npm run db:migrate
+npm run dev:api
+```
+
+Copy the environment example only on first setup; preserve your existing local configuration. In another terminal:
+
+```sh
 npm run dev
 ```
 
-Open the local URL printed by Vite (normally http://127.0.0.1:5173). Stop the server with Ctrl+C. For a different port, call the workspace script directly: `npm run dev --workspace @personal-finance/web -- --port 5174`.
+Open the URL printed by Vite, normally http://127.0.0.1:5173. The API listens at http://127.0.0.1:3000 and PostgreSQL at `127.0.0.1:5433`. These services are for private local development until authentication and ownership are complete. Do not expose them through a tunnel or deploy this setup publicly.
+
+Check the API directly or through Vite:
 
 ```sh
-npm run typecheck
-npm run build
-npm run preview
+curl --fail http://127.0.0.1:3000/api/health
+curl --fail http://127.0.0.1:5173/api/health
 ```
 
-The build checks TypeScript before bundling, and writes static output to `apps/web/dist`. Preview serves that production output locally (normally port 4173); it requires a successful build first and is not a production hosting service.
+Both return `{"status":"ok","database":"up"}` when a real database query succeeds. This is a connectivity check; use `npm run db:status` to check migration state. Database failures return HTTP 503:
 
-Verified using Node.js 25.1.0 and npm 11.6.2. The root manifest declares Node.js >=22.12.0 and npm 11; use a supported Node release that satisfies these requirements. `packageManager` records the npm version used, but does not automatically install or switch your npm version. The lockfile records resolved dependency versions.
+```json
+{ "statusCode": 503, "message": "Database unavailable", "path": "/api/health" }
+```
 
-Use `npm install` when changing dependencies; use `npm ci` for an existing lockfile. Add a frontend dependency with `npm install <package> --workspace @personal-finance/web` (or add `-D` for a development dependency). Commit the updated root `package-lock.json` with the manifest change.
+Unknown API routes return the same error shape with status 404. Unexpected errors use a generic 500 message. Query strings and database exception details are not included in these responses.
 
-## Layout
+Stop web/API watchers with Ctrl+C. `npm run db:down` removes the database container while retaining the named volume; `npm run db:up` restores access to that same data. Avoid `docker compose down -v`: it deletes the project's local database volume.
+
+## Environment
+
+| Variable            | Location                | Purpose                                                                       |
+| ------------------- | ----------------------- | ----------------------------------------------------------------------------- |
+| `DATABASE_URL`      | `apps/api/.env`         | Required server-only PostgreSQL connection URL                                |
+| `PORT`              | `apps/api/.env`         | API port, defaults to 3000                                                    |
+| `VITE_API_BASE_URL` | `apps/web/.env.example` | Public `/api` path for future feature requests; no request client uses it yet |
+
+The API and Prisma CLI load `.env` from their workspace directory; the root npm commands select that workspace. Shell-provided environment variables take precedence. The checked-in credentials in Compose and the API example are disposable local defaults. Use a URL-encoded password if you customize the connection URL. Changing Compose credentials after a volume is initialized does not change the existing database user's password.
+
+Never put database URLs, passwords, tokens, or session secrets in `VITE_*` variables: Vite exposes those values to the browser. The Vite proxy sends `/api` to `http://127.0.0.1:3000` without removing the prefix. If you change the API port, update the proxy target too. No permissive CORS policy is needed because the browser calls Vite on its own origin.
+
+## Commands and checks
+
+```sh
+npm run check        # formatting, lint, both workspace type checks and builds
+npm run test:api     # real API/database integration; requires migrated PostgreSQL
+npm run db:status    # inspect applied/pending migration history
+npm run build        # web static build and API JavaScript compilation
+npm run preview      # preview the built frontend, not the full-stack application
+```
+
+`npm run dev:api` first generates the Prisma client and compiles the API, then watches TypeScript and restarts Node when emitted JavaScript changes. Fix compiler errors before trusting the running output; the watcher may retain the last successful build. Prisma schema changes require rerunning generation/restarting this command. The frontend development command remains `npm run dev`.
+
+CI runs quality checks and API integration tests using a disposable PostgreSQL service. `npm run check` itself does not require a database or a local environment file; generated Prisma output is recreated by the API build/typecheck commands.
+
+## Database migrations
+
+FIN-06 creates the `finance` schema (a PostgreSQL namespace), with applied migrations recorded in `finance._prisma_migrations`. Account owners, balances, pots, and seed data belong to FIN-07. No sample financial records are created yet.
+
+For an existing checkout, use `npm run db:migrate`: it applies committed migrations without resetting data and safely does nothing when they are already applied. To author a schema change in a later FIN:
+
+```sh
+npm run db:migrate:dev --workspace @personal-finance/api -- --name describe_change
+```
+
+Review the generated SQL and commit the schema, migration directory, and lockfile together. Development migration creation uses a shadow database to replay history; the local Compose user has the required permissions. Never edit an already-applied migration or accept a reset prompt without understanding which local data it removes. Do not use `db push` as a substitute for tracked migrations.
+
+## Layout and learning
 
 ```text
-package.json                 npm workspace and root command shortcuts
-package-lock.json            single dependency lockfile
-apps/web/
-  package.json               frontend dependencies and scripts
-  index.html                 browser entry and React mount element
-  vite.config.ts             React and Tailwind plugins
-  tsconfig.json              strict TypeScript checking
-  .env.example               public configuration example
-  src/main.tsx               mount React and load CSS
-  src/App.tsx                minimal starter screen
-  src/styles.css             Tailwind entry
-  public/assets/             supplied images and fonts, including licenses
-docs/                        decisions, backlog, and learning notes
+apps/web/                       React application and Vite proxy
+apps/api/src/main.ts             server entry point and local binding
+apps/api/src/app.ts              HTTP-wide prefix, errors, validation, shutdown
+apps/api/src/app.module.ts       Nest dependency wiring
+apps/api/src/database.service.ts shared Prisma client and connection pool
+apps/api/src/health.controller.ts GET /api/health
+apps/api/prisma/                 schema and committed SQL migration history
+apps/api/test/                   real HTTP/PostgreSQL integration tests
+compose.yaml                    local PostgreSQL and persistent volume
+package-lock.json               one lockfile for both npm workspaces
+docs/                           local planning and learning notes (Git-ignored)
 ```
 
-Add `apps/api` and its workspace entry during the backend milestone. No extra monorepo build platform is needed for this structure.
+Read [the FIN-06 walkthrough](docs/fin-06-backend-outcome.md) for the recommended file order, backend concepts, and verification evidence. Earlier decisions are in [FIN-01](docs/fin-01-foundations-review.md); the [backlog](docs/project-backlog.md) defines FIN scope.
 
-## Environment and assets
+Prisma uses its [explicit-output client generator](https://docs.prisma.io/docs/orm/v7/prisma-schema/overview/generators) and [CLI configuration](https://docs.prisma.io/docs/orm/v7/reference/prisma-config-reference). Generated client files, dependencies, compiled output, and local environment files are ignored. The dependency audit currently reports a high-severity Multer advisory through Nest’s Express adapter. This milestone has no multipart/upload routes and remains local-only; review the upstream fix before adding uploads or deploying.
 
-The current screen runs without an environment file. `apps/web/.env.example` shows the future public API path `/api`; copy it to `apps/web/.env.local` when needed. Vite exposes `VITE_*` values to browser code, so never put database URLs, passwords, tokens, or session secrets there. The example is not wired into requests yet. API proxy configuration belongs to FIN-06.
+Supplied assets and font licenses remain under `apps/web/public/assets/`. Premium designs stay outside this repository; preserve their ignore rules.
 
-Supplied images are served under `/assets/images/` and fonts under `/assets/fonts/`. Public assets are copied into production output unchanged. Font licenses are retained; font loading and design tokens belong to FIN-04. The private Figma file, design references, and challenge preview stay with the separate materials folder. Existing premium-design ignore rules remain; dependencies, output, and local environment files are also ignored.
+## Troubleshooting
 
-## Learn from the scaffold
-
-Read [the FIN-02 walkthrough](docs/fin-02-scaffold-outcome.md) to follow the entry flow, understand each configuration choice, and see verification evidence. Domain behavior is documented in [FIN-01](docs/fin-01-foundations-review.md); feature ordering is in [the backlog](docs/project-backlog.md).
-
-Formatting, lint rules, CI, and PR conventions are FIN-03. Shared styles/components are FIN-04; routes and responsive navigation are FIN-05. The starter heading is only a smoke check for React and Tailwind, not the Overview page.
+- Docker connection error: start Docker Desktop and rerun `npm run db:up`.
+- Port 5433 occupied: stop the conflicting service or change both Compose's host port and `DATABASE_URL`.
+- API port occupied: change `PORT` and Vite's proxy target together, then restart both servers.
+- Health returns 503: check `docker compose ps`, the API connection URL, and database credentials. Check migration state separately with `npm run db:status`.
+- Vite proxy connection refused: start the API and inspect its terminal for build/configuration errors.
+- API requests during `npm run preview`: preview serves frontend build output only; use the two development servers for this milestone.

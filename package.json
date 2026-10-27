@@ -9,18 +9,25 @@
     "npm": ">=11 <12"
   },
   "workspaces": [
-    "apps/web"
+    "apps/web",
+    "apps/api"
   ],
   "scripts": {
     "dev": "npm run dev --workspace @personal-finance/web",
-    "build": "npm run build --workspace @personal-finance/web",
-    "typecheck": "npm run typecheck --workspace @personal-finance/web",
+    "build": "npm run build --workspaces",
+    "typecheck": "npm run typecheck --workspaces",
     "preview": "npm run preview --workspace @personal-finance/web",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "check": "npm run format:check && npm run lint && npm run typecheck && npm run build"
+    "check": "npm run format:check && npm run lint && npm run typecheck && npm run build",
+    "dev:api": "npm run dev --workspace @personal-finance/api",
+    "db:up": "docker compose up -d --wait",
+    "db:down": "docker compose down",
+    "db:migrate": "npm run db:migrate --workspace @personal-finance/api",
+    "db:status": "npm run db:status --workspace @personal-finance/api",
+    "test:api": "npm run test --workspace @personal-finance/api"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
