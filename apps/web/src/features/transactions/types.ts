@@ -4,6 +4,7 @@ export interface Transaction {
   name: string
   category: string
   date: string
+  /** Signed integer rupiah (IDR). */
   amount: number
   recurring: boolean
 }

@@ -2,6 +2,7 @@ import transactionData from './transactions.json'
 import type { Transaction } from '../types'
 
 /**
+ * Amounts are whole IDR, adapted once from original challenge values × 1,000.
  * The fixture is newest first. Sorting by timestamp and then immutable fixture
  * ID gives tied timestamps a deterministic order across renders.
  */
