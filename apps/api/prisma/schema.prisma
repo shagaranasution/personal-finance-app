@@ -1,12 +1,45 @@
 generator client {
-  provider = "prisma-client"
-  output = "../src/generated/prisma"
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
   moduleFormat = "esm"
 }
 
 datasource db {
   provider = "postgresql"
-  schemas = ["finance"]
+  schemas  = ["finance"]
 }
 
-// Ownership, balance snapshots, and pots arrive in FIN-07.
+model AccountOwner {
+  id          String           @id @default(uuid()) @db.Uuid
+  displayName String           @db.VarChar(100)
+  balance     BalanceSnapshot?
+  pots        Pot[]
+
+  @@schema("finance")
+}
+
+// All monetary Int fields store whole IDR, never cents or floating-point values.
+model BalanceSnapshot {
+  id       String       @id @default(uuid()) @db.Uuid
+  ownerId  String       @unique @db.Uuid
+  owner    AccountOwner @relation(fields: [ownerId], references: [id], onDelete: Restrict)
+  current  Int
+  income   Int
+  expenses Int
+
+  @@schema("finance")
+}
+
+model Pot {
+  id      String       @id @default(uuid()) @db.Uuid
+  ownerId String       @db.Uuid
+  owner   AccountOwner @relation(fields: [ownerId], references: [id], onDelete: Restrict)
+  name    String       @db.VarChar(30)
+  target  Int
+  total   Int          @default(0)
+  theme   String       @db.VarChar(7)
+
+  // Theme allocation is per owner. Names may repeat; IDs identify pots.
+  @@unique([ownerId, theme])
+  @@schema("finance")
+}

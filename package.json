@@ -27,7 +27,9 @@
     "db:down": "docker compose down",
     "db:migrate": "npm run db:migrate --workspace @personal-finance/api",
     "db:status": "npm run db:status --workspace @personal-finance/api",
-    "test:api": "npm run test --workspace @personal-finance/api"
+    "test:api": "npm run test --workspace @personal-finance/api",
+    "db:seed": "npm run db:seed --workspace @personal-finance/api",
+    "test:web": "npm run test --workspace @personal-finance/web"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

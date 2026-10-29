@@ -15,7 +15,7 @@ export default defineConfig([
   ]),
 
   {
-    files: ['apps/api/test/**/*.mjs'],
+    files: ['apps/*/test/**/*.mjs'],
     extends: [js.configs.recommended],
     languageOptions: { globals: globals.node },
   },

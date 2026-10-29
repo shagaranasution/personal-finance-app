@@ -11,6 +11,7 @@ npm ci
 cp apps/api/.env.example apps/api/.env
 npm run db:up
 npm run db:migrate
+npm run db:seed
 npm run dev:api
 ```
 
@@ -51,10 +52,21 @@ The API and Prisma CLI load `.env` from their workspace directory; the root npm 
 
 Never put database URLs, passwords, tokens, or session secrets in `VITE_*` variables: Vite exposes those values to the browser. The Vite proxy sends `/api` to `http://127.0.0.1:3000` without removing the prefix. If you change the API port, update the proxy target too. No permissive CORS policy is needed because the browser calls Vite on its own origin.
 
+## Currency: IDR
+
+**IDR (Indonesian rupiah) is the only app currency.** Every monetary value in app fixtures, database fields, calculations, and API payloads is an integer number of rupiah, never a fractional amount. PostgreSQL `INTEGER` bounds each nonnegative stored value to `0..2,147,483,647`; targets and movements must be positive. This is a technical storage bound, not a savings target cap. Future arithmetic must validate resulting bounds before writing. Integer columns can coerce fractional input, so validate whole-rupiah values at application boundaries before persistence too.
+
+Display amounts with `Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0, maximumFractionDigits: 0 })`. English UI copy and date/name ordering remain separate from currency formatting. Money inputs use ungrouped digits (for example `150000`); reject fractions and overflow instead of silently rounding.
+
+The approved demo adaptation multiplies every original challenge amount by **1,000 exactly once**: original `4836.00` becomes `4_836_000` rupiah (Rp4.836.000), and `3814.25` becomes `3_814_250` rupiah. This is fixed fixture scaling, not an exchange rate. App-owned transaction and seed fixtures are already adapted: never multiply them again at runtime. Original challenge materials remain unmodified reference inputs; apply the same rule when importing future budget/bill fixtures.
+
+Initial current/income/expenses are Rp4.836.000 / Rp3.814.250 / Rp1.700.500. Five pots hold Rp920.000 in total; combined current balance plus pots is Rp5.756.000. Preserve the independent balance snapshots rather than reconstructing them from transactions. Repository guidance in `AGENTS.md` records these rules for future changes.
+
 ## Commands and checks
 
 ```sh
 npm run check        # formatting, lint, both workspace type checks and builds
+npm run test:web     # IDR formatting and transaction fixture checks
 npm run test:api     # real API/database integration; requires migrated PostgreSQL
 npm run db:status    # inspect applied/pending migration history
 npm run build        # web static build and API JavaScript compilation
@@ -67,7 +79,13 @@ CI runs quality checks and API integration tests using a disposable PostgreSQL s
 
 ## Database migrations
 
-FIN-06 creates the `finance` schema (a PostgreSQL namespace), with applied migrations recorded in `finance._prisma_migrations`. Account owners, balances, pots, and seed data belong to FIN-07. No sample financial records are created yet.
+FIN-06 creates the `finance` schema (a PostgreSQL namespace), with applied migrations recorded in `finance._prisma_migrations`. FIN-07 adds `AccountOwner`, `BalanceSnapshot`, and `Pot`, with owner foreign keys, one balance snapshot per owner, unique themes within each owner's pots, and SQL checks for valid nonnegative money, positive targets, names, and palette themes. Pots may exceed their targets.
+
+Run `npm run db:seed` explicitly after migrations. It builds the API and invokes Prisma's development seed. The seed creates a fixed local demo owner, one balance snapshot, and five pots atomically, using stable UUIDs. Rerunning it preserves existing records and edits, and recreates missing fixture records. It is not a reset command; deleting a seeded pot and then reseeding will restore it. If another pot occupies a required theme or a seed ID belongs to another owner, the seed fails and rolls back instead of overwriting data.
+
+Demo ownership is a temporary backend-only mechanism, not authentication. Never accept an owner ID from browser input as authorization. The seed refuses `NODE_ENV=production` and non-localhost database hosts. Check that `DATABASE_URL` targets your disposable local database; a localhost tunnel could still point elsewhere. Authenticated session ownership replaces the fixed owner in the accounts milestone.
+
+FIN-07 integration tests create and remove a uniquely named temporary database, so the test database role needs `CREATEDB` permission (the supplied local/CI PostgreSQL role has it). They do not reset your application database.
 
 For an existing checkout, use `npm run db:migrate`: it applies committed migrations without resetting data and safely does nothing when they are already applied. To author a schema change in a later FIN:
 
@@ -93,7 +111,7 @@ package-lock.json               one lockfile for both npm workspaces
 docs/                           local planning and learning notes (Git-ignored)
 ```
 
-Read [the FIN-06 walkthrough](docs/fin-06-backend-outcome.md) for the recommended file order, backend concepts, and verification evidence. Earlier decisions are in [FIN-01](docs/fin-01-foundations-review.md); the [backlog](docs/project-backlog.md) defines FIN scope.
+Read [the FIN-07 walkthrough](docs/fin-07-ownership-and-idr-outcome.md) for ownership, exact IDR amounts, seed behavior, and the recommended learning order. Read [the FIN-06 walkthrough](docs/fin-06-backend-outcome.md) for the recommended file order, backend concepts, and verification evidence. Earlier decisions are in [FIN-01](docs/fin-01-foundations-review.md); the [backlog](docs/project-backlog.md) defines FIN scope.
 
 Prisma uses its [explicit-output client generator](https://docs.prisma.io/docs/orm/v7/prisma-schema/overview/generators) and [CLI configuration](https://docs.prisma.io/docs/orm/v7/reference/prisma-config-reference). Generated client files, dependencies, compiled output, and local environment files are ignored. The dependency audit currently reports a high-severity Multer advisory through Nest’s Express adapter. This milestone has no multipart/upload routes and remains local-only; review the upstream fix before adding uploads or deploying.
 

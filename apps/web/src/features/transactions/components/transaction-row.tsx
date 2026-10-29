@@ -1,4 +1,5 @@
 import type { Transaction } from '../types'
+import { formatRupiah } from '../../../shared/lib/money'
 
 interface TransactionRowProps {
   transaction: Transaction
@@ -10,17 +11,6 @@ const dateFormatter = new Intl.DateTimeFormat('en-US', {
   year: 'numeric',
   timeZone: 'UTC',
 })
-
-const amountFormatter = new Intl.NumberFormat('en-US', {
-  style: 'currency',
-  currency: 'USD',
-})
-
-function formatAmount(amount: number) {
-  const signedAmount =
-    amount > 0 ? `+${amountFormatter.format(amount)}` : amountFormatter.format(amount)
-  return signedAmount.replace('-', '−')
-}
 
 export function TransactionRow({ transaction }: TransactionRowProps) {
   const isIncome = transaction.amount > 0
@@ -56,7 +46,7 @@ export function TransactionRow({ transaction }: TransactionRowProps) {
 
       <div className="flex min-w-[7rem] flex-col items-end gap-50 tablet:col-start-4">
         <span className={`text-preset-4-bold ${isIncome ? 'text-green' : 'text-grey-900'}`}>
-          {formatAmount(transaction.amount)}
+          {formatRupiah(transaction.amount, true)}
         </span>
         <time
           className="whitespace-nowrap text-preset-5 text-grey-500 tablet:hidden"
