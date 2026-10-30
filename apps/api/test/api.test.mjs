@@ -53,6 +53,13 @@ test('database connection failure returns a safe 503', async () => {
       message: 'Database unavailable',
       path: '/api/health',
     })
+    const pots = await fetch(`${await app.getUrl()}/api/pots`)
+    assert.equal(pots.status, 503)
+    assert.deepEqual(await pots.json(), {
+      statusCode: 503,
+      message: 'Pots are temporarily unavailable',
+      path: '/api/pots',
+    })
   } finally {
     if (app) await app.close()
     if (original === undefined) delete process.env.DATABASE_URL
