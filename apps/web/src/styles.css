@@ -35,6 +35,8 @@
 
   /* Radius */
 
+  --radius-50: 0.25rem;
+
   --radius-100: 0.5rem;
   --radius-150: 0.75rem;
 

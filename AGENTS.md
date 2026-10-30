@@ -6,3 +6,5 @@
 - Keep owner selection server-side. The fixed demo owner is temporary local-development infrastructure, not authentication. Never accept a client-supplied owner as authorization.
 - Preserve SQL migration history and database constraints; do not use `db push` to bypass migrations.
 - Keep changes focused on the active FIN. Include a learning walkthrough with recommended file-reading order and explanations of new concepts.
+
+- For UI work, inspect the relevant Figma layouts and page states before implementation. Match the design precisely while preserving IDR rules; where a state is absent, follow the existing design’s visual and interaction patterns.

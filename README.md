@@ -62,11 +62,21 @@ The approved demo adaptation multiplies every original challenge amount by **1,0
 
 Initial current/income/expenses are Rp4.836.000 / Rp3.814.250 / Rp1.700.500. Five pots hold Rp920.000 in total; combined current balance plus pots is Rp5.756.000. Preserve the independent balance snapshots rather than reconstructing them from transactions. Repository guidance in `AGENTS.md` records these rules for future changes.
 
+## Persisted pots
+
+After starting the database/API/frontend, open `/pots`. `GET /api/pots` reads PostgreSQL for the fixed server-side local demo owner and returns an array of `{ id, name, theme, total, target }`, ordered by stable ID. `total` and `target` are whole IDR; no runtime fixture scaling is applied. The endpoint returns no owner identity and ignores client query parameters when resolving ownership. It is unavailable as a demo feature in production mode.
+
+The page fetches on mount and reload, with loading, empty, error, and keyboard-operable Retry states. HTTP and browser requests use `no-store`; database failure returns HTTP 503 with the standard error shape. A successful empty array means this owner has no pots, rather than a request failure. If the local database has not been seeded, use `npm run db:seed` separately.
+
+Cards follow the inspected Figma desktop/tablet/mobile layouts, with IDR values and accessible progress bars. The real percentage can exceed 100%; only the visual fill is capped. Zero saved is supported, and reaching/exceeding a goal has a text label. Management controls retain their design positions but are disabled for FIN-08: creating, editing, deleting, adding money, and withdrawing belong to later cards. Loading/empty/error layouts follow the existing design system because page-specific versions were absent in Figma.
+
+If an API process was already running before these changes, restart it so `/api/pots` is registered. The regular development proxy still targets port 3000. Read [the FIN-08 walkthrough](docs/fin-08-persisted-pots-outcome.md) for the recommended reading order, design decisions, request lifecycle, and verification evidence.
+
 ## Commands and checks
 
 ```sh
 npm run check        # formatting, lint, both workspace type checks and builds
-npm run test:web     # IDR formatting and transaction fixture checks
+npm run test:web     # IDR, pots client, response validation, and progress checks
 npm run test:api     # real API/database integration; requires migrated PostgreSQL
 npm run db:status    # inspect applied/pending migration history
 npm run build        # web static build and API JavaScript compilation
@@ -104,6 +114,9 @@ apps/api/src/app.ts              HTTP-wide prefix, errors, validation, shutdown
 apps/api/src/app.module.ts       Nest dependency wiring
 apps/api/src/database.service.ts shared Prisma client and connection pool
 apps/api/src/health.controller.ts GET /api/health
+apps/api/src/pots/               owner-scoped GET /api/pots
+apps/web/src/features/pots/      request lifecycle, pot cards, and progress
+apps/web/src/pages/pots-page.tsx responsive persisted Pots page
 apps/api/prisma/                 schema and committed SQL migration history
 apps/api/test/                   real HTTP/PostgreSQL integration tests
 compose.yaml                    local PostgreSQL and persistent volume
