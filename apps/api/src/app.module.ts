@@ -1,6 +1,7 @@
+import { PotsModule } from './pots/pots.module.js'
 import { Module } from '@nestjs/common'
-import { DatabaseService } from './database.service.js'
+import { DatabaseModule } from './database.module.js'
 import { HealthController } from './health.controller.js'
 
-@Module({ controllers: [HealthController], providers: [DatabaseService] })
+@Module({ imports: [DatabaseModule, PotsModule], controllers: [HealthController] })
 export class AppModule {}

@@ -104,6 +104,9 @@ apps/api/src/app.ts              HTTP-wide prefix, errors, validation, shutdown
 apps/api/src/app.module.ts       Nest dependency wiring
 apps/api/src/database.service.ts shared Prisma client and connection pool
 apps/api/src/health.controller.ts GET /api/health
+apps/api/src/pots/               owner-scoped GET /api/pots
+apps/web/src/features/pots/      request lifecycle, pot cards, and progress
+apps/web/src/pages/pots-page.tsx responsive persisted Pots page
 apps/api/prisma/                 schema and committed SQL migration history
 apps/api/test/                   real HTTP/PostgreSQL integration tests
 compose.yaml                    local PostgreSQL and persistent volume

@@ -1,3 +1,4 @@
+import { PotsPage } from '@/pages/pots-page'
 import { Route, Routes } from 'react-router'
 import { NotFoundPage } from '@/pages/not-found-page'
 import { PagePlaceholder } from '@/pages/page-placeholder'
@@ -11,7 +12,7 @@ export default function App() {
         <Route index element={<PagePlaceholder title="Overview" />} />
         <Route path="transactions" element={<TransactionsPage />} />
         <Route path="budgets" element={<PagePlaceholder title="Budgets" />} />
-        <Route path="pots" element={<PagePlaceholder title="Pots" />} />
+        <Route path="pots" element={<PotsPage />} />
         <Route path="recurring-bills" element={<PagePlaceholder title="Recurring Bills" />} />
         <Route path="*" element={<NotFoundPage />} />
       </Route>
