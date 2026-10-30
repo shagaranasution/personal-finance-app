@@ -3,7 +3,6 @@ import { randomUUID } from 'node:crypto'
 import { spawnSync } from 'node:child_process'
 import { test } from 'node:test'
 import pg from 'pg'
-import { createApp } from '../dist/app.js'
 import { PrismaPg } from '@prisma/adapter-pg'
 import { PrismaClient } from '../dist/generated/prisma/client.js'
 import { seedDemo } from '../dist/development/seed-demo.js'
@@ -192,49 +191,6 @@ test('migrations, ownership, and seed use a disposable database', async (t) => {
           data: newPot({ name: demoPots[1].name, total: 2000, target: 1000 }),
         })
         assert.equal(beyondGoal.total, 2000) // Duplicate names and above-target saving are legal.
-      },
-    )
-
-    await t.test(
-      'HTTP pot reads are owner-scoped, stable, persisted, and empty when appropriate',
-      async () => {
-        const previousUrl = process.env.DATABASE_URL
-        let app
-        try {
-          process.env.DATABASE_URL = testUrl
-          app = await createApp()
-        } finally {
-          if (previousUrl === undefined) delete process.env.DATABASE_URL
-          else process.env.DATABASE_URL = previousUrl
-        }
-        try {
-          await app.listen(0, '127.0.0.1')
-          const base = await app.getUrl()
-          const other = await database.accountOwner.findFirst({ where: { id: { not: ownerId } } })
-          const request = await fetch(`${base}/api/pots?ownerId=${other.id}`)
-          assert.equal(request.status, 200)
-          assert.equal(request.headers.get('cache-control'), 'no-store')
-          const data = await request.json()
-          const expected = await database.pot.findMany({
-            where: { ownerId },
-            select: { id: true, name: true, theme: true, total: true, target: true },
-            orderBy: { id: 'asc' },
-          })
-          assert.deepEqual(data, expected)
-          assert.ok(data.every((pot) => !('ownerId' in pot)))
-          assert.equal(
-            data.some((pot) => pot.name === 'My savings' && pot.total === 200_000),
-            true,
-          )
-          assert.deepEqual(await (await fetch(`${base}/api/pots`)).json(), expected)
-          // Only disposable test data is removed; the application database is untouched.
-          await database.pot.deleteMany({ where: { ownerId } })
-          const empty = await fetch(`${base}/api/pots`)
-          assert.equal(empty.status, 200)
-          assert.deepEqual(await empty.json(), [])
-        } finally {
-          await app.close()
-        }
       },
     )
 

@@ -62,6 +62,8 @@ The approved demo adaptation multiplies every original challenge amount by **1,0
 
 Initial current/income/expenses are Rp4.836.000 / Rp3.814.250 / Rp1.700.500. Five pots hold Rp920.000 in total; combined current balance plus pots is Rp5.756.000. Preserve the independent balance snapshots rather than reconstructing them from transactions. Repository guidance in `AGENTS.md` records these rules for future changes.
 
+<<<<<<< HEAD
+
 ## Persisted pots
 
 After starting the database/API/frontend, open `/pots`. `GET /api/pots` reads PostgreSQL for the fixed server-side local demo owner and returns an array of `{ id, name, theme, total, target }`, ordered by stable ID. `total` and `target` are whole IDR; no runtime fixture scaling is applied. The endpoint returns no owner identity and ignores client query parameters when resolving ownership. It is unavailable as a demo feature in production mode.
@@ -72,11 +74,15 @@ Cards follow the inspected Figma desktop/tablet/mobile layouts, with IDR values 
 
 If an API process was already running before these changes, restart it so `/api/pots` is registered. The regular development proxy still targets port 3000. Read [the FIN-08 walkthrough](docs/fin-08-persisted-pots-outcome.md) for the recommended reading order, design decisions, request lifecycle, and verification evidence.
 
+=======
+
+> > > > > > > master
+
 ## Commands and checks
 
 ```sh
 npm run check        # formatting, lint, both workspace type checks and builds
-npm run test:web     # IDR, pots client, response validation, and progress checks
+npm run test:web     # IDR formatting and transaction fixture checks
 npm run test:api     # real API/database integration; requires migrated PostgreSQL
 npm run db:status    # inspect applied/pending migration history
 npm run build        # web static build and API JavaScript compilation

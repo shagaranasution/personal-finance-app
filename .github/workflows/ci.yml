@@ -50,7 +50,7 @@ jobs:
       - name: Run quality checks
         run: npm run check
 
-      - name: Frontend tests
+      - name: Currency formatting and fixture tests
         run: npm run test:web
 
       - name: Apply database migrations
