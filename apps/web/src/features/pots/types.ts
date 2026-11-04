@@ -6,3 +6,9 @@ export interface Pot {
   total: number
   target: number
 }
+
+export interface CreatePotInput {
+  name: string
+  target: number
+  theme: string
+}

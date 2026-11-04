@@ -1,10 +1,14 @@
+import { useRef, useState } from 'react'
+import { CreatePotDialog } from '@/features/pots/components/create-pot-dialog'
 import { Button } from '@/shared/ui/button'
 import { Card } from '@/shared/ui/card'
 import { PotCard } from '@/features/pots/components/pot-card'
 import { usePots } from '@/features/pots/use-pots'
 
 export function PotsPage() {
-  const { state, retry } = usePots()
+  const { state, retry, addPot } = usePots()
+  const [creating, setCreating] = useState(false)
+  const createButton = useRef<HTMLButtonElement>(null)
 
   return (
     <section aria-labelledby="pots-title" className="flex flex-col gap-400">
@@ -13,9 +17,11 @@ export function PotsPage() {
           Pots
         </h1>
         <Button
-          disabled
-          className="shrink-0 disabled:opacity-100"
-          title="Creating pots is not available yet"
+          ref={createButton}
+          disabled={state.status !== 'success'}
+          onClick={() => setCreating(true)}
+          className="shrink-0"
+          title={state.status !== 'success' ? 'Load your pots before adding a new one' : undefined}
         >
           + Add New Pot
         </Button>
@@ -30,6 +36,18 @@ export function PotsPage() {
               : 'No pots yet.'
             : ''}
       </p>
+
+      {creating && state.status === 'success' && (
+        <CreatePotDialog
+          usedThemes={state.pots.map((pot) => pot.theme)}
+          returnFocusRef={createButton}
+          onClose={() => setCreating(false)}
+          onCreated={(pot) => {
+            addPot(pot)
+            setCreating(false)
+          }}
+        />
+      )}
 
       <div aria-busy={state.status === 'loading'}>
         {state.status === 'loading' && (

@@ -60,6 +60,17 @@ test('database connection failure returns a safe 503', async () => {
       message: 'Pots are temporarily unavailable',
       path: '/api/pots',
     })
+    const failedCreate = await fetch(`${await app.getUrl()}/api/pots`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: 'Rainy Days', target: 1000, theme: '#C94736' }),
+    })
+    assert.equal(failedCreate.status, 503)
+    assert.deepEqual(await failedCreate.json(), {
+      statusCode: 503,
+      message: 'Unable to create a pot right now',
+      path: '/api/pots',
+    })
   } finally {
     if (app) await app.close()
     if (original === undefined) delete process.env.DATABASE_URL

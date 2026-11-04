@@ -62,11 +62,29 @@ The approved demo adaptation multiplies every original challenge amount by **1,0
 
 Initial current/income/expenses are Rp4.836.000 / Rp3.814.250 / Rp1.700.500. Five pots hold Rp920.000 in total; combined current balance plus pots is Rp5.756.000. Preserve the independent balance snapshots rather than reconstructing them from transactions. Repository guidance in `AGENTS.md` records these rules for future changes.
 
+## Pots: read and create
+
+Open `/pots` after starting the API and frontend. `GET /api/pots` returns persisted pots for the fixed server-side demo owner. “Add New Pot” now opens an accessible, Figma-based dialog; successful creation updates the list from the saved server response and survives reload. Other management controls remain disabled until their later FINs.
+
+`POST /api/pots` accepts only these fields:
+
+```json
+{ "name": "Rainy Days", "target": 2000000, "theme": "#C94736" }
+```
+
+`target` is a positive integer **number of rupiah**, from 1 to 2147483647; it is not scaled at runtime. Form entry uses ungrouped digits. Names are trimmed and must contain 1–30 Unicode code points; duplicate names are allowed. Themes must be canonical palette values and unused within this owner's pots. The server supplies the UUID, owner, and initial saved total of zero. Creating a pot does not change the balance snapshot or move money.
+
+Successful creation returns HTTP 201 and `{ id, name, theme, total, target }`. Invalid/extra fields return 400, a used theme returns 409, and a database failure returns a safe 503. The database's existing owner/theme unique key also prevents simultaneous identical submissions from creating two pots. There is no new migration or dependency to install for this feature.
+
+The dialog supports initial focus, Tab containment, keyboard theme selection, Escape, close, and return focus. While saving, fields and dismissal are temporarily disabled; the request has a 15-second timeout. Errors keep the entered values. A failed connection or timeout cannot prove whether the database committed, so the UI advises checking the refreshed list before retrying; POST requests are never retried automatically. When all 15 themes are occupied, the dialog explains the limit and disables submission.
+
+If an API process was running before this change, restart it to register `POST /api/pots`. The regular Vite proxy still uses API port 3000. Read [the FIN-09 learning walkthrough](docs/fin-09-create-pot-outcome.md) for the file order, validation, database conflict handling, focus lifecycle, and verification evidence.
+
 ## Commands and checks
 
 ```sh
 npm run check        # formatting, lint, both workspace type checks and builds
-npm run test:web     # IDR formatting and transaction fixture checks
+npm run test:web     # IDR, pots validation/client, and progress checks
 npm run test:api     # real API/database integration; requires migrated PostgreSQL
 npm run db:status    # inspect applied/pending migration history
 npm run build        # web static build and API JavaScript compilation
@@ -85,7 +103,7 @@ Run `npm run db:seed` explicitly after migrations. It builds the API and invokes
 
 Demo ownership is a temporary backend-only mechanism, not authentication. Never accept an owner ID from browser input as authorization. The seed refuses `NODE_ENV=production` and non-localhost database hosts. Check that `DATABASE_URL` targets your disposable local database; a localhost tunnel could still point elsewhere. Authenticated session ownership replaces the fixed owner in the accounts milestone.
 
-FIN-07 integration tests create and remove a uniquely named temporary database, so the test database role needs `CREATEDB` permission (the supplied local/CI PostgreSQL role has it). They do not reset your application database.
+Database integration tests create and remove a uniquely named temporary database, so the test database role needs `CREATEDB` permission (the supplied local/CI PostgreSQL role has it). They do not reset your application database.
 
 For an existing checkout, use `npm run db:migrate`: it applies committed migrations without resetting data and safely does nothing when they are already applied. To author a schema change in a later FIN:
 
@@ -104,8 +122,8 @@ apps/api/src/app.ts              HTTP-wide prefix, errors, validation, shutdown
 apps/api/src/app.module.ts       Nest dependency wiring
 apps/api/src/database.service.ts shared Prisma client and connection pool
 apps/api/src/health.controller.ts GET /api/health
-apps/api/src/pots/               owner-scoped GET /api/pots
-apps/web/src/features/pots/      request lifecycle, pot cards, and progress
+apps/api/src/pots/               validated owner-scoped GET/POST /api/pots
+apps/web/src/features/pots/      request lifecycle, create dialog, pot cards, and progress
 apps/web/src/pages/pots-page.tsx responsive persisted Pots page
 apps/api/prisma/                 schema and committed SQL migration history
 apps/api/test/                   real HTTP/PostgreSQL integration tests

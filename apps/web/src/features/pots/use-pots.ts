@@ -26,5 +26,18 @@ export function usePots() {
     setAttempt((previous) => previous + 1)
   }
 
-  return { state, retry }
+  function addPot(pot: Pot) {
+    setState((previous) =>
+      previous.status === 'success'
+        ? {
+            status: 'success',
+            pots: [...previous.pots.filter((existing) => existing.id !== pot.id), pot].sort(
+              (a, b) => a.id.localeCompare(b.id),
+            ),
+          }
+        : previous,
+    )
+  }
+
+  return { state, retry, addPot }
 }
