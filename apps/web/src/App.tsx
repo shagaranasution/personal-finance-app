@@ -4,6 +4,7 @@ import { NotFoundPage } from '@/pages/not-found-page'
 import { PagePlaceholder } from '@/pages/page-placeholder'
 import { AppShell } from '@/shared/layout/app-shell'
 import { TransactionsPage } from '@/pages/transactions-page'
+import { BudgetsPage } from '@/pages/budgets-page'
 
 export default function App() {
   return (
@@ -11,7 +12,7 @@ export default function App() {
       <Route element={<AppShell />}>
         <Route index element={<PagePlaceholder title="Overview" />} />
         <Route path="transactions" element={<TransactionsPage />} />
-        <Route path="budgets" element={<PagePlaceholder title="Budgets" />} />
+        <Route path="budgets" element={<BudgetsPage />} />
         <Route path="pots" element={<PotsPage />} />
         <Route path="recurring-bills" element={<PagePlaceholder title="Recurring Bills" />} />
         <Route path="*" element={<NotFoundPage />} />
