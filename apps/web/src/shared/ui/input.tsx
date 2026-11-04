@@ -11,8 +11,7 @@ interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'prefix
   inputClassName?: string
 }
 
-const baseFieldClasses =
-  'flex h-[45px] items-center gap-200 rounded-100 border bg-white px-250 py-150'
+const baseFieldClasses = 'flex h-[45px] items-center rounded-100 border bg-white px-250 py-150'
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
   (
@@ -37,6 +36,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
     const messageId = message ? `${inputId}-message` : undefined
     const fieldClasses = [
       baseFieldClasses,
+      prefix ? 'gap-150' : 'gap-200',
       disabled
         ? 'cursor-not-allowed border-grey-300 bg-grey-100'
         : error

@@ -1,3 +1,5 @@
+export const MAX_RUPIAH = 2_147_483_647
+
 /** Amounts are already whole IDR. Never scale or round values at display time. */
 const formatter = new Intl.NumberFormat('id-ID', {
   style: 'currency',
