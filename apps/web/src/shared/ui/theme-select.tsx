@@ -1,7 +1,7 @@
 import { useEffect, useId, useRef, useState, type RefObject } from 'react'
-import { potThemes } from '../pot-themes'
+import { themeOptions } from './theme-options'
 
-interface Props {
+interface ThemeSelectProps {
   value: string
   usedThemes: readonly string[]
   disabled: boolean
@@ -10,14 +10,21 @@ interface Props {
   onChange: (value: string) => void
 }
 
-export function PotThemeSelect({ value, usedThemes, disabled, error, buttonRef, onChange }: Props) {
+export function ThemeSelect({
+  value,
+  usedThemes,
+  disabled,
+  error,
+  buttonRef,
+  onChange,
+}: ThemeSelectProps) {
   const id = useId()
   const container = useRef<HTMLDivElement>(null)
   const options = useRef<(HTMLButtonElement | null)[]>([])
   const [open, setOpen] = useState(false)
   const [active, setActive] = useState(0)
-  const selected = potThemes.find((theme) => theme.value === value)
-  const available = potThemes.flatMap((theme, index) =>
+  const selected = themeOptions.find((theme) => theme.value === value)
+  const available = themeOptions.flatMap((theme, index) =>
     usedThemes.includes(theme.value) ? [] : [index],
   )
 
@@ -35,7 +42,7 @@ export function PotThemeSelect({ value, usedThemes, disabled, error, buttonRef, 
   }, [open])
 
   function openMenu() {
-    const index = potThemes.findIndex((theme) => theme.value === value)
+    const index = themeOptions.findIndex((theme) => theme.value === value)
     setActive(available.includes(index) ? index : (available[0] ?? 0))
     setOpen(true)
   }
@@ -68,7 +75,7 @@ export function PotThemeSelect({ value, usedThemes, disabled, error, buttonRef, 
           aria-invalid={error ? true : undefined}
           aria-describedby={error ? `${id}-error` : undefined}
           disabled={disabled || available.length === 0}
-          className={`flex h-[45px] w-full items-center justify-between gap-200 rounded-100 border px-250 py-150 text-left text-preset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-grey-900 disabled:cursor-not-allowed disabled:bg-grey-100 disabled:border-grey-300 disabled:text-grey-500 ${error ? 'border-red-accessible' : 'border-beige-500 hover:border-grey-900'}`}
+          className={`flex h-[45px] w-full items-center justify-between gap-200 rounded-100 border px-250 py-150 text-left text-preset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-grey-900 disabled:cursor-not-allowed disabled:border-grey-300 disabled:bg-grey-100 disabled:text-grey-500 ${error ? 'border-red-accessible' : 'border-beige-500 hover:border-grey-900'}`}
           onClick={() => (open ? closeMenu() : openMenu())}
           onKeyDown={(event) => {
             if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
@@ -98,7 +105,7 @@ export function PotThemeSelect({ value, usedThemes, disabled, error, buttonRef, 
             aria-labelledby={`${id}-label`}
             className="absolute inset-x-0 bottom-full z-20 mb-100 max-h-[min(300px,45dvh)] overflow-y-auto rounded-100 bg-white px-250 py-150 shadow-[0_4px_24px_0_#00000040]"
           >
-            {potThemes.map((theme, index) => {
+            {themeOptions.map((theme, index) => {
               const used = usedThemes.includes(theme.value)
               return (
                 <button

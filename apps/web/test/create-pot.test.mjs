@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import { validatePotForm } from '../src/features/pots/create-pot-validation.ts'
-import { potThemes } from '../src/features/pots/pot-themes.ts'
+import { themeOptions } from '../src/shared/ui/theme-options.ts'
 import { createPot, PotCreationError } from '../src/features/pots/pots-api.ts'
 
 const values = { name: '  Rainy Days  ', target: '2000000', theme: '#C94736' }
@@ -43,13 +43,13 @@ test('creation form rejects invalid names, amounts, unavailable and unsupported 
   }
   assert.equal(validatePotForm(values, ['#C94736']).valid, false)
   assert.equal(validatePotForm({ ...values, theme: '#FFFFFF' }, []).valid, false)
-  assert.equal(potThemes.length, 15)
-  assert.equal(new Set(potThemes.map((theme) => theme.value)).size, 15)
-  for (const theme of potThemes)
+  assert.equal(themeOptions.length, 15)
+  assert.equal(new Set(themeOptions.map((theme) => theme.value)).size, 15)
+  for (const theme of themeOptions)
     assert.equal(
       validatePotForm(
         { ...values, theme: theme.value },
-        potThemes.map((theme) => theme.value),
+        themeOptions.map((theme) => theme.value),
       ).valid,
       false,
     )

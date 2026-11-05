@@ -1,12 +1,18 @@
+import { useRef, useState } from 'react'
 import { BudgetCard } from '@/features/budgets/components/budget-card'
 import { BudgetSummaryCard } from '@/features/budgets/components/budget-summary-card'
 import { budgets } from '@/features/budgets/data/budgets'
+import { CreateBudgetDialog } from '@/features/budgets/components/create-budget-dialog'
 import { summarizeBudgets } from '@/features/budgets/budget-summary'
+import type { Budget } from '@/features/budgets/types'
 import { transactions } from '@/features/transactions/data/transactions'
 import { Button } from '@/shared/ui/button'
 
 export function BudgetsPage() {
-  const summaries = summarizeBudgets(budgets, transactions)
+  const [currentBudgets, setCurrentBudgets] = useState<Budget[]>(budgets)
+  const [creating, setCreating] = useState(false)
+  const createButton = useRef<HTMLButtonElement>(null)
+  const summaries = summarizeBudgets(currentBudgets, transactions)
 
   return (
     <section aria-labelledby="budgets-title" className="flex flex-col gap-400">
@@ -14,10 +20,26 @@ export function BudgetsPage() {
         <h1 className="text-preset-1" id="budgets-title">
           Budgets
         </h1>
-        <Button disabled title="Budget creation is coming in a later feature">
+        <Button ref={createButton} onClick={() => setCreating(true)}>
           + Add New Budget
         </Button>
       </header>
+
+      {creating && (
+        <CreateBudgetDialog
+          usedCategories={currentBudgets.map((budget) => budget.category)}
+          usedThemes={currentBudgets.map((budget) => budget.theme)}
+          returnFocusRef={createButton}
+          onClose={() => setCreating(false)}
+          onCreated={(budget) => {
+            setCurrentBudgets((current) => [
+              ...current,
+              { ...budget, id: `budget-${crypto.randomUUID()}` },
+            ])
+            setCreating(false)
+          }}
+        />
+      )}
 
       <div className="grid grid-cols-1 items-start gap-300 desktop:grid-cols-[minmax(320px,0.9fr)_minmax(0,1.6fr)]">
         <BudgetSummaryCard budgets={summaries} />

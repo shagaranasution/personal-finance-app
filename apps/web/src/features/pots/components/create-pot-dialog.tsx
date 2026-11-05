@@ -1,10 +1,10 @@
 import { useEffect, useId, useRef, useState, type FormEvent, type RefObject } from 'react'
 import { Button } from '@/shared/ui/button'
 import { Input } from '@/shared/ui/input'
+import { ThemeSelect } from '@/shared/ui/theme-select'
+import { themeOptions } from '@/shared/ui/theme-options'
 import { createPot } from '../pots-api'
-import { potThemes } from '../pot-themes'
 import { validatePotForm, type PotFormErrors } from '../create-pot-validation'
-import { PotThemeSelect } from './pot-theme-select'
 import type { Pot } from '../types'
 import { IconCloseModal } from '@/shared/components/icons'
 
@@ -28,12 +28,12 @@ export function CreatePotDialog({ usedThemes, returnFocusRef, onClose, onCreated
   const [name, setName] = useState('')
   const [target, setTarget] = useState('')
   const [theme, setTheme] = useState<string>(
-    () => potThemes.find((entry) => !usedThemes.includes(entry.value))?.value ?? '',
+    () => themeOptions.find((entry) => !usedThemes.includes(entry.value))?.value ?? '',
   )
   const [errors, setErrors] = useState<PotFormErrors>({})
   const [serverError, setServerError] = useState('')
   const [pending, setPending] = useState(false)
-  const exhausted = potThemes.every((entry) => usedThemes.includes(entry.value))
+  const exhausted = themeOptions.every((entry) => usedThemes.includes(entry.value))
   const remaining = 30 - [...name.trim()].length
 
   useEffect(() => {
@@ -199,7 +199,7 @@ export function CreatePotDialog({ usedThemes, returnFocusRef, onClose, onCreated
               setServerError('')
             }}
           />
-          <PotThemeSelect
+          <ThemeSelect
             buttonRef={themeButton}
             value={theme}
             usedThemes={usedThemes}

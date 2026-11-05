@@ -1,5 +1,10 @@
-// Canonical design palette; keep in sync with API validation and SQL constraints.
-export const potThemes = [
+export interface ThemeOption {
+  value: string
+  label: string
+}
+
+/** Canonical palette shared by budgets and pots. Availability is feature-specific. */
+export const themeOptions = [
   { value: '#277C78', label: 'Green' },
   { value: '#F2CDAC', label: 'Yellow' },
   { value: '#82C9D7', label: 'Cyan' },
@@ -15,4 +20,4 @@ export const potThemes = [
   { value: '#AF81BA', label: 'Pink' },
   { value: '#CAB361', label: 'Gold' },
   { value: '#BE6C49', label: 'Orange' },
-] as const
+] as const satisfies readonly ThemeOption[]

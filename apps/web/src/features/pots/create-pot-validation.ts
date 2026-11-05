@@ -1,5 +1,5 @@
 import { MAX_RUPIAH } from '../../shared/lib/money.ts'
-import { potThemes } from './pot-themes.ts'
+import { themeOptions } from '../../shared/ui/theme-options.ts'
 import type { CreatePotInput } from './types'
 
 export interface PotFormValues {
@@ -34,7 +34,7 @@ export function validatePotForm(
     errors.target = 'Enter whole rupiah from 1 to 2147483647, using digits only.'
   }
 
-  if (!potThemes.some((theme) => theme.value === values.theme)) errors.theme = 'Choose a theme.'
+  if (!themeOptions.some((theme) => theme.value === values.theme)) errors.theme = 'Choose a theme.'
   else if (usedThemes.includes(values.theme))
     errors.theme = 'This theme is already used. Choose another.'
 
