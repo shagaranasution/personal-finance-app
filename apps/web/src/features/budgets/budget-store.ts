@@ -30,9 +30,7 @@ export function addBudget(input: CreateBudgetInput) {
 }
 
 export function updateBudget(id: string, input: CreateBudgetInput) {
-  publish(
-    currentBudgets.map((budget) => (budget.id === id ? { ...budget, ...input } : budget)),
-  )
+  publish(currentBudgets.map((budget) => (budget.id === id ? { ...budget, ...input } : budget)))
 }
 
 export function removeBudget(id: string) {

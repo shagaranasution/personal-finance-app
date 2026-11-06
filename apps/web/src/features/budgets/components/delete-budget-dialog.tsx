@@ -41,7 +41,9 @@ export function DeleteBudgetDialog({
       className="fixed inset-0 m-auto max-h-[calc(100dvh_-_3rem)] w-[calc(100%_-_2.5rem)] max-w-[560px] overflow-y-auto rounded-150 border-0 bg-white p-0 text-grey-900 backdrop:bg-black/50"
       onKeyDown={(event) => {
         if (event.key !== 'Tab') return
-        const buttons = [...event.currentTarget.querySelectorAll<HTMLButtonElement>('button:not(:disabled)')]
+        const buttons = [
+          ...event.currentTarget.querySelectorAll<HTMLButtonElement>('button:not(:disabled)'),
+        ]
         const first = buttons[0]
         const last = buttons.at(-1)
         if (!first || !last) {

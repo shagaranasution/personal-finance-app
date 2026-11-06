@@ -1,11 +1,4 @@
-import {
-  useEffect,
-  useId,
-  useRef,
-  useState,
-  type ReactNode,
-  type RefObject,
-} from 'react'
+import { useEffect, useId, useRef, useState, type ReactNode, type RefObject } from 'react'
 import { IconCaretDown } from '../components/icons'
 
 export interface DropdownSelectOption {
@@ -46,9 +39,7 @@ export function DropdownSelect<Option extends DropdownSelectOption>({
   const [open, setOpen] = useState(false)
   const [active, setActive] = useState(0)
   const selected = options.find((option) => option.value === value)
-  const available = options.flatMap((option, index) =>
-    option.disabled ? [] : [index],
-  )
+  const available = options.flatMap((option, index) => (option.disabled ? [] : [index]))
 
   useEffect(() => {
     if (open) optionRefs.current[active]?.focus()
@@ -107,7 +98,7 @@ export function DropdownSelect<Option extends DropdownSelectOption>({
           }}
         >
           <span className="flex min-w-0 items-center gap-150" id={`${id}-value`}>
-            {selected ? renderValue?.(selected) ?? selected.label : emptyLabel}
+            {selected ? (renderValue?.(selected) ?? selected.label) : emptyLabel}
           </span>
           <span className="flex size-4 shrink-0 items-center justify-center">
             <IconCaretDown />
