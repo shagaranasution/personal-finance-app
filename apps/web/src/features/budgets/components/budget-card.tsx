@@ -1,8 +1,8 @@
 import { Link } from 'react-router'
 import { Card } from '@/shared/ui/card'
 import { formatRupiah } from '@/shared/lib/money'
-import { IconEllipsis } from '@/shared/components/icons'
-import type { BudgetSummary } from '../types'
+import { BudgetActions } from './budget-actions'
+import type { Budget, BudgetSummary } from '../types'
 
 const transactionDate = new Intl.DateTimeFormat('en-GB', {
   day: 'numeric',
@@ -11,7 +11,13 @@ const transactionDate = new Intl.DateTimeFormat('en-GB', {
   timeZone: 'UTC',
 })
 
-export function BudgetCard({ budget }: { budget: BudgetSummary }) {
+interface BudgetCardProps {
+  budget: BudgetSummary
+  onEdit: (budget: Budget, trigger: HTMLButtonElement) => void
+  onDelete: (budget: Budget, trigger: HTMLButtonElement) => void
+}
+
+export function BudgetCard({ budget, onEdit, onDelete }: BudgetCardProps) {
   const headingId = `${budget.id}-heading`
 
   return (
@@ -27,15 +33,7 @@ export function BudgetCard({ budget }: { budget: BudgetSummary }) {
             {budget.category}
           </h2>
         </div>
-        <button
-          aria-label={`Options for ${budget.category} budget (not available yet)`}
-          className="flex size-6 shrink-0 cursor-not-allowed items-center justify-center"
-          disabled
-          title="Budget options are not available yet"
-          type="button"
-        >
-          <IconEllipsis width={14} height={4} />
-        </button>
+        <BudgetActions budget={budget} onEdit={onEdit} onDelete={onDelete} />
       </div>
 
       <p className="text-preset-5 text-grey-500">Maximum of {formatRupiah(budget.maximum)}</p>
