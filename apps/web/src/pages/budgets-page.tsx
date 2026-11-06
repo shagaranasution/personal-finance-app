@@ -1,17 +1,21 @@
 import { useRef, useState } from 'react'
 import { BudgetCard } from '@/features/budgets/components/budget-card'
 import { BudgetSummaryCard } from '@/features/budgets/components/budget-summary-card'
-import { budgets } from '@/features/budgets/data/budgets'
-import { CreateBudgetDialog } from '@/features/budgets/components/create-budget-dialog'
+import { addBudget, removeBudget, updateBudget, useBudgets } from '@/features/budgets/budget-store'
+import { BudgetFormDialog } from '@/features/budgets/components/budget-form-dialog'
+import { DeleteBudgetDialog } from '@/features/budgets/components/delete-budget-dialog'
 import { summarizeBudgets } from '@/features/budgets/budget-summary'
 import type { Budget } from '@/features/budgets/types'
 import { transactions } from '@/features/transactions/data/transactions'
 import { Button } from '@/shared/ui/button'
 
 export function BudgetsPage() {
-  const [currentBudgets, setCurrentBudgets] = useState<Budget[]>(budgets)
+  const currentBudgets = useBudgets()
   const [creating, setCreating] = useState(false)
+  const [editing, setEditing] = useState<Budget | null>(null)
+  const [deleting, setDeleting] = useState<Budget | null>(null)
   const createButton = useRef<HTMLButtonElement>(null)
+  const dialogReturnFocus = useRef<HTMLButtonElement>(null)
   const summaries = summarizeBudgets(currentBudgets, transactions)
 
   return (
@@ -26,17 +30,45 @@ export function BudgetsPage() {
       </header>
 
       {creating && (
-        <CreateBudgetDialog
+        <BudgetFormDialog
           usedCategories={currentBudgets.map((budget) => budget.category)}
           usedThemes={currentBudgets.map((budget) => budget.theme)}
           returnFocusRef={createButton}
           onClose={() => setCreating(false)}
-          onCreated={(budget) => {
-            setCurrentBudgets((current) => [
-              ...current,
-              { ...budget, id: `budget-${crypto.randomUUID()}` },
-            ])
+          onSaved={(budget) => {
+            addBudget(budget)
             setCreating(false)
+          }}
+        />
+      )}
+
+      {editing && (
+        <BudgetFormDialog
+          budget={editing}
+          usedCategories={currentBudgets
+            .filter((budget) => budget.id !== editing.id)
+            .map((budget) => budget.category)}
+          usedThemes={currentBudgets
+            .filter((budget) => budget.id !== editing.id)
+            .map((budget) => budget.theme)}
+          returnFocusRef={dialogReturnFocus}
+          onClose={() => setEditing(null)}
+          onSaved={(updated) => {
+            updateBudget(editing.id, updated)
+            setEditing(null)
+          }}
+        />
+      )}
+
+      {deleting && (
+        <DeleteBudgetDialog
+          budget={deleting}
+          returnFocusRef={dialogReturnFocus}
+          onClose={() => setDeleting(null)}
+          onConfirm={() => {
+            dialogReturnFocus.current = createButton.current
+            removeBudget(deleting.id)
+            setDeleting(null)
           }}
         />
       )}
@@ -47,7 +79,17 @@ export function BudgetsPage() {
           <ul aria-label="Budgets" className="flex list-none flex-col gap-300 p-0">
             {summaries.map((budget) => (
               <li className="min-w-0" key={budget.id}>
-                <BudgetCard budget={budget} />
+                <BudgetCard
+                  budget={budget}
+                  onEdit={(selected, trigger) => {
+                    dialogReturnFocus.current = trigger
+                    setEditing(selected)
+                  }}
+                  onDelete={(selected, trigger) => {
+                    dialogReturnFocus.current = trigger
+                    setDeleting(selected)
+                  }}
+                />
               </li>
             ))}
           </ul>

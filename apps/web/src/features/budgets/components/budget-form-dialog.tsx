@@ -1,7 +1,8 @@
 import { useEffect, useId, useRef, useState, type FormEvent, type RefObject } from 'react'
 import { transactionCategories } from '@/features/transactions/transaction-query'
 import { Button } from '@/shared/ui/button'
-import { IconCaretDown, IconCloseModal } from '@/shared/components/icons'
+import { IconCloseModal } from '@/shared/components/icons'
+import { DropdownSelect } from '@/shared/ui/dropdown-select'
 import { Input } from '@/shared/ui/input'
 import { ThemeSelect } from '@/shared/ui/theme-select'
 import { themeOptions } from '@/shared/ui/theme-options'
@@ -10,57 +11,66 @@ import {
   type BudgetFormErrors,
   type CreateBudgetInput,
 } from '../create-budget-validation'
+import type { Budget } from '../types'
 
 interface Props {
   usedCategories: readonly string[]
   usedThemes: readonly string[]
+  budget?: Budget
   returnFocusRef: RefObject<HTMLButtonElement | null>
   onClose: () => void
-  onCreated: (budget: CreateBudgetInput) => void
+  onSaved: (budget: CreateBudgetInput) => void
 }
 
-export function CreateBudgetDialog({
+export function BudgetFormDialog({
   usedCategories,
   usedThemes,
+  budget,
   returnFocusRef,
   onClose,
-  onCreated,
+  onSaved,
 }: Props) {
   const id = useId()
   const dialog = useRef<HTMLDialogElement>(null)
   const closeButton = useRef<HTMLButtonElement>(null)
-  const categorySelect = useRef<HTMLSelectElement>(null)
+  const categoryButton = useRef<HTMLButtonElement>(null)
   const maximumInput = useRef<HTMLInputElement>(null)
   const themeButton = useRef<HTMLButtonElement>(null)
-  const submitButton = useRef<HTMLButtonElement>(null)
   const submitting = useRef(false)
   const [category, setCategory] = useState(
-    () => transactionCategories.find((option) => !usedCategories.includes(option)) ?? '',
+    () =>
+      budget?.category ??
+      transactionCategories.find((option) => !usedCategories.includes(option)) ??
+      '',
   )
-  const [maximum, setMaximum] = useState('')
+  const [maximum, setMaximum] = useState(() => (budget ? String(budget.maximum) : ''))
   const [theme, setTheme] = useState(
-    () => themeOptions.find((option) => !usedThemes.includes(option.value))?.value ?? '',
+    () =>
+      budget?.theme ??
+      themeOptions.find((option) => !usedThemes.includes(option.value))?.value ??
+      '',
   )
   const [errors, setErrors] = useState<BudgetFormErrors>({})
   const noCategoriesAvailable = transactionCategories.every((option) =>
     usedCategories.includes(option),
   )
   const noThemesAvailable = themeOptions.every((option) => usedThemes.includes(option.value))
+  const initiallyUnavailable = useRef(noCategoriesAvailable || noThemesAvailable)
 
   useEffect(() => {
     const element = dialog.current!
     const trigger = returnFocusRef.current
     const previousOverflow = document.body.style.overflow
     element.showModal()
-    if (noCategoriesAvailable || noThemesAvailable) closeButton.current?.focus()
-    else categorySelect.current?.focus()
+    if (initiallyUnavailable.current) closeButton.current?.focus()
+    else categoryButton.current?.focus()
     document.body.style.overflow = 'hidden'
     return () => {
       element.close()
       document.body.style.overflow = previousOverflow
       trigger?.focus()
     }
-  }, [noCategoriesAvailable, noThemesAvailable, returnFocusRef])
+  }, [returnFocusRef])
 
   function updateCategory(value: string) {
     setCategory(value)
@@ -84,14 +94,14 @@ export function CreateBudgetDialog({
     const result = validateBudgetForm({ category, maximum, theme }, usedCategories, usedThemes)
     if (!result.valid) {
       setErrors(result.errors)
-      if (result.errors.category) categorySelect.current?.focus()
+      if (result.errors.category) categoryButton.current?.focus()
       else if (result.errors.maximum) maximumInput.current?.focus()
       else themeButton.current?.focus()
       return
     }
 
     submitting.current = true
-    onCreated(result.data)
+    onSaved(result.data)
   }
 
   return (
@@ -104,7 +114,7 @@ export function CreateBudgetDialog({
         if (event.key !== 'Tab') return
         const controls = [
           ...event.currentTarget.querySelectorAll<HTMLElement>(
-            'button:not(:disabled):not([tabindex="-1"]), select:not(:disabled), input:not(:disabled)',
+            'button:not(:disabled):not([tabindex="-1"]), input:not(:disabled)',
           ),
         ]
         const first = controls[0]
@@ -133,13 +143,13 @@ export function CreateBudgetDialog({
       >
         <header className="flex items-center justify-between gap-200">
           <h2 id={`${id}-title`} className="text-preset-2 tablet:text-preset-1">
-            Add New Budget
+            {budget ? 'Edit Budget' : 'Add New Budget'}
           </h2>
           <button
             ref={closeButton}
             type="button"
             onClick={onClose}
-            aria-label="Close Add New Budget"
+            aria-label={`Close ${budget ? 'Edit Budget' : 'Add New Budget'}`}
             className="flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-grey-900"
           >
             <IconCloseModal width="26" height="26" />
@@ -147,8 +157,9 @@ export function CreateBudgetDialog({
         </header>
 
         <p className="text-preset-4 text-grey-500" id={`${id}-description`}>
-          Choose a category to set a spending budget. These categories can help you monitor
-          spending.
+          {budget
+            ? 'As your budgets change, feel free to update your spending limits.'
+            : 'Choose a category to set a spending budget. These categories can help you monitor spending.'}
         </p>
 
         {noCategoriesAvailable && (
@@ -165,38 +176,19 @@ export function CreateBudgetDialog({
         )}
 
         <div className="flex flex-col gap-200">
-          <label className="flex min-w-0 flex-col gap-50">
-            <span className="text-preset-5-bold text-grey-500">Budget Category</span>
-            <span className="relative">
-              <select
-                ref={categorySelect}
-                aria-invalid={errors.category ? true : undefined}
-                aria-describedby={errors.category ? `${id}-category-error` : undefined}
-                className={`h-[45px] w-full appearance-none rounded-100 border bg-white px-250 pr-500 text-preset-4 text-grey-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-grey-900 disabled:cursor-not-allowed disabled:border-grey-300 disabled:bg-grey-100 ${errors.category ? 'border-red-accessible' : 'border-beige-500 hover:border-grey-900'}`}
-                disabled={noCategoriesAvailable || noThemesAvailable}
-                onChange={(event) => updateCategory(event.target.value)}
-                value={category}
-              >
-                {transactionCategories.map((option) => {
-                  const used = usedCategories.includes(option)
-                  return (
-                    <option key={option} value={option} disabled={used}>
-                      {used ? `${option} (Already budgeted)` : option}
-                    </option>
-                  )
-                })}
-              </select>
-              <IconCaretDown className="pointer-events-none absolute right-200 top-1/2 -translate-y-1/2" />
-            </span>
-            {errors.category && (
-              <span
-                className="text-right text-preset-5 text-red-accessible"
-                id={`${id}-category-error`}
-              >
-                {errors.category}
-              </span>
-            )}
-          </label>
+          <DropdownSelect
+            label="Budget Category"
+            value={category}
+            options={transactionCategories.map((option) => ({
+              value: option,
+              label: option,
+              disabled: usedCategories.includes(option),
+            }))}
+            disabled={noCategoriesAvailable || noThemesAvailable}
+            error={errors.category}
+            buttonRef={categoryButton}
+            onChange={updateCategory}
+          />
 
           <Input
             ref={maximumInput}
@@ -233,12 +225,11 @@ export function CreateBudgetDialog({
         )}
 
         <Button
-          ref={submitButton}
           type="submit"
           disabled={noCategoriesAvailable || noThemesAvailable}
           className="w-full"
         >
-          Add Budget
+          {budget ? 'Save Changes' : 'Add Budget'}
         </Button>
       </form>
     </dialog>
