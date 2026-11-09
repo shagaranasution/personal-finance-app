@@ -1,8 +1,17 @@
 import { useEffect, useState } from 'react'
+import {
+  deletePotFromFixture,
+  editPotInFixture,
+  startPotFixture,
+  type PotDeletionResult,
+} from './pot-fixture-adapter'
 import { fetchPots } from './pots-api'
 import type { Pot } from './types'
 
-type PotsState = { status: 'loading' } | { status: 'error' } | { status: 'success'; pots: Pot[] }
+type PotsState =
+  | { status: 'loading' }
+  | { status: 'error' }
+  | { status: 'success'; pots: Pot[]; fixture?: ReturnType<typeof startPotFixture> }
 
 export function usePots() {
   const [state, setState] = useState<PotsState>({ status: 'loading' })
@@ -28,7 +37,7 @@ export function usePots() {
 
   function addPot(pot: Pot) {
     setState((previous) =>
-      previous.status === 'success'
+      previous.status === 'success' && !previous.fixture
         ? {
             status: 'success',
             pots: [...previous.pots.filter((existing) => existing.id !== pot.id), pot].sort(
@@ -39,5 +48,30 @@ export function usePots() {
     )
   }
 
-  return { state, retry, addPot }
+  function editPot(pot: Pot) {
+    setState((previous) => {
+      if (previous.status !== 'success') return previous
+      const fixture = previous.fixture ?? startPotFixture(previous.pots)
+      const updated = editPotInFixture(fixture, pot)
+      return { ...previous, pots: updated.pots, fixture: updated }
+    })
+  }
+
+  function deletePot(potId: string): PotDeletionResult {
+    if (state.status !== 'success') {
+      return {
+        state: { pots: [], currentBalance: 0 },
+        deleted: false,
+        refunded: 0,
+      }
+    }
+    const fixture = state.fixture ?? startPotFixture(state.pots)
+    const result = deletePotFromFixture(fixture, potId)
+    if (result.deleted) {
+      setState({ ...state, pots: result.state.pots, fixture: result.state })
+    }
+    return result
+  }
+
+  return { state, retry, addPot, editPot, deletePot }
 }

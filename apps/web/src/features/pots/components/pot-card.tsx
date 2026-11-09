@@ -3,9 +3,15 @@ import { Card } from '@/shared/ui/card'
 import { formatRupiah } from '@/shared/lib/money'
 import { getPotProgress } from '../pot-progress'
 import type { Pot } from '../types'
-import { IconEllipsis } from '@/shared/components/icons'
+import { PotActions } from './pot-actions'
 
-export function PotCard({ pot }: { pot: Pot }) {
+interface PotCardProps {
+  pot: Pot
+  onEdit: (pot: Pot, trigger: HTMLButtonElement) => void
+  onDelete: (pot: Pot, trigger: HTMLButtonElement) => void
+}
+
+export function PotCard({ pot, onEdit, onDelete }: PotCardProps) {
   const progress = getPotProgress(pot.total, pot.target)
   const headingId = `pot-${pot.id}`
 
@@ -22,14 +28,7 @@ export function PotCard({ pot }: { pot: Pot }) {
             {pot.name}
           </h2>
         </div>
-        <button
-          aria-label={`Options for ${pot.name} (not available yet)`}
-          disabled
-          title="Pot options are not available yet"
-          className="flex size-4 shrink-0 cursor-not-allowed items-center justify-center"
-        >
-          <IconEllipsis width={14} height={4} />
-        </button>
+        <PotActions pot={pot} onEdit={onEdit} onDelete={onDelete} />
       </div>
 
       <div className="flex min-h-[114px] flex-col justify-center gap-200">

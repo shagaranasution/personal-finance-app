@@ -64,7 +64,7 @@ Initial current/income/expenses are Rp4.836.000 / Rp3.814.250 / Rp1.700.500. Fiv
 
 ## Pots: read and create
 
-Open `/pots` after starting the API and frontend. `GET /api/pots` returns persisted pots for the fixed server-side demo owner. “Add New Pot” now opens an accessible, Figma-based dialog; successful creation updates the list from the saved server response and survives reload. Other management controls remain disabled until their later FINs.
+Open `/pots` after starting the API and frontend. `GET /api/pots` returns persisted pots for the fixed server-side demo owner. “Add New Pot” opens an accessible, Figma-based dialog; successful creation updates the list from the saved server response and survives reload. Edit and delete actions use an explicitly labeled local UI preview until FIN-29 adds persisted mutations; add-money and withdrawal controls remain disabled until their later FINs.
 
 `POST /api/pots` accepts only these fields:
 
@@ -122,19 +122,14 @@ apps/api/src/app.ts              HTTP-wide prefix, errors, validation, shutdown
 apps/api/src/app.module.ts       Nest dependency wiring
 apps/api/src/database.service.ts shared Prisma client and connection pool
 apps/api/src/health.controller.ts GET /api/health
-<<<<<<< HEAD
-apps/api/src/pots/               validated owner-scoped GET/POST /api/pots
-apps/web/src/features/pots/      request lifecycle, create dialog, pot cards, and progress
-=======
 apps/api/src/pots/               owner-scoped GET /api/pots
 apps/web/src/features/pots/      request lifecycle, pot cards, and progress
->>>>>>> master
 apps/web/src/pages/pots-page.tsx responsive persisted Pots page
 apps/api/prisma/                 schema and committed SQL migration history
 apps/api/test/                   real HTTP/PostgreSQL integration tests
 compose.yaml                    local PostgreSQL and persistent volume
 package-lock.json               one lockfile for both npm workspaces
-docs/                           local planning and learning notes (Git-ignored)
+docs/                           shared debt register and FIN-14 walkthrough; other notes Git-ignored
 ```
 
 Read [the FIN-07 walkthrough](docs/fin-07-ownership-and-idr-outcome.md) for ownership, exact IDR amounts, seed behavior, and the recommended learning order. Read [the FIN-06 walkthrough](docs/fin-06-backend-outcome.md) for the recommended file order, backend concepts, and verification evidence. Earlier decisions are in [FIN-01](docs/fin-01-foundations-review.md); the [backlog](docs/project-backlog.md) defines FIN scope.
@@ -142,6 +137,10 @@ Read [the FIN-07 walkthrough](docs/fin-07-ownership-and-idr-outcome.md) for owne
 Prisma uses its [explicit-output client generator](https://docs.prisma.io/docs/orm/v7/prisma-schema/overview/generators) and [CLI configuration](https://docs.prisma.io/docs/orm/v7/reference/prisma-config-reference). Generated client files, dependencies, compiled output, and local environment files are ignored. The dependency audit currently reports a high-severity Multer advisory through Nest’s Express adapter. This milestone has no multipart/upload routes and remains local-only; review the upstream fix before adding uploads or deploying.
 
 Supplied assets and font licenses remain under `apps/web/public/assets/`. Premium designs stay outside this repository; preserve their ignore rules.
+
+## Technical debt
+
+The [technical-debt register](docs/technical-debt.md) tracks known issues intentionally deferred, including their impact, evidence, proposed remediation, and completion criteria. The register and [FIN-14 walkthrough](docs/fin-14-edit-delete-budgets-outcome.md) are eligible for version control; other planning and learning notes remain ignored.
 
 ## Troubleshooting
 

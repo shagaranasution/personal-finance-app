@@ -10,12 +10,13 @@ import { IconCloseModal } from '@/shared/components/icons'
 
 interface Props {
   usedThemes: readonly string[]
+  pot?: Pot
   returnFocusRef: RefObject<HTMLButtonElement | null>
   onClose: () => void
-  onCreated: (pot: Pot) => void
+  onSaved: (pot: Pot) => void
 }
 
-export function CreatePotDialog({ usedThemes, returnFocusRef, onClose, onCreated }: Props) {
+export function PotFormDialog({ usedThemes, pot, returnFocusRef, onClose, onSaved }: Props) {
   const id = useId()
   const dialog = useRef<HTMLDialogElement>(null)
   const nameInput = useRef<HTMLInputElement>(null)
@@ -25,10 +26,11 @@ export function CreatePotDialog({ usedThemes, returnFocusRef, onClose, onCreated
   const submitButton = useRef<HTMLButtonElement>(null)
   const request = useRef<AbortController | null>(null)
   const submitting = useRef(false)
-  const [name, setName] = useState('')
-  const [target, setTarget] = useState('')
+  const [name, setName] = useState(() => pot?.name ?? '')
+  const [target, setTarget] = useState(() => (pot ? String(pot.target) : ''))
   const [theme, setTheme] = useState<string>(
-    () => themeOptions.find((entry) => !usedThemes.includes(entry.value))?.value ?? '',
+    () =>
+      pot?.theme ?? themeOptions.find((entry) => !usedThemes.includes(entry.value))?.value ?? '',
   )
   const [errors, setErrors] = useState<PotFormErrors>({})
   const [serverError, setServerError] = useState('')
@@ -69,13 +71,17 @@ export function CreatePotDialog({ usedThemes, returnFocusRef, onClose, onCreated
       return
     }
     submitting.current = true // Immediate guard, before React renders disabled controls.
+    if (pot) {
+      onSaved({ ...pot, ...result.data })
+      return
+    }
     setPending(true)
     setErrors({})
     const controller = new AbortController()
     request.current = controller
     try {
       const saved = await createPot(result.data, controller.signal)
-      if (!controller.signal.aborted) onCreated(saved)
+      if (!controller.signal.aborted) onSaved(saved)
     } catch (error) {
       if (!controller.signal.aborted) {
         setServerError(
@@ -135,21 +141,22 @@ export function CreatePotDialog({ usedThemes, returnFocusRef, onClose, onCreated
       >
         <header className="flex items-center justify-between gap-200">
           <h2 id={`${id}-title`} className="text-preset-2 tablet:text-preset-1">
-            Add New Pot
+            {pot ? 'Edit Pot' : 'Add New Pot'}
           </h2>
           <button
             type="button"
             disabled={pending}
             onClick={onClose}
-            aria-label="Close Add New Pot"
+            aria-label={`Close ${pot ? 'Edit Pot' : 'Add New Pot'}`}
             className="flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-grey-900 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <IconCloseModal width="26" height="26" />
           </button>
         </header>
         <p className="text-preset-4 text-grey-500" id={`${id}-description`}>
-          Create a pot to set savings targets. These can help keep you on track as you save for
-          special purchases.
+          {pot
+            ? 'Update your pot name, savings target, or theme. Changes are a local UI preview and are not saved; reload saved pots to discard them.'
+            : 'Create a pot to set savings targets. These can help keep you on track as you save for special purchases.'}
         </p>
         {exhausted && (
           <p role="alert" className="text-preset-4 text-grey-500">
@@ -229,7 +236,7 @@ export function CreatePotDialog({ usedThemes, returnFocusRef, onClose, onCreated
           aria-busy={pending}
           className="w-full"
         >
-          {pending ? 'Adding pot…' : 'Add Pot'}
+          {pending ? 'Adding pot…' : pot ? 'Save Changes' : 'Add Pot'}
         </Button>
         <p ref={statusMessage} role="status" tabIndex={-1} className="sr-only">
           {pending ? 'Saving your pot. Please wait.' : ''}
