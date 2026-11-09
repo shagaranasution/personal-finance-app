@@ -25,7 +25,8 @@ dist/
 !.env.example
 *.log
 
-docs
+# Keep local notes private; version the shared debt register and FIN-14 walkthrough.
+docs/*
 
 # Prisma generated client
 apps/api/src/generated/

@@ -1,27 +1,42 @@
 import { useRef, useState } from 'react'
-import { CreatePotDialog } from '@/features/pots/components/create-pot-dialog'
+import { PotFormDialog } from '@/features/pots/components/pot-form-dialog'
+import { DeletePotDialog } from '@/features/pots/components/delete-pot-dialog'
 import { Button } from '@/shared/ui/button'
 import { Card } from '@/shared/ui/card'
 import { PotCard } from '@/features/pots/components/pot-card'
 import { usePots } from '@/features/pots/use-pots'
+import type { Pot } from '@/features/pots/types'
+import { formatRupiah } from '@/shared/lib/money'
 
 export function PotsPage() {
-  const { state, retry, addPot } = usePots()
+  const { state, retry, addPot, editPot, deletePot } = usePots()
   const [creating, setCreating] = useState(false)
+  const [editing, setEditing] = useState<Pot | null>(null)
+  const [deleting, setDeleting] = useState<Pot | null>(null)
+  const [deleteError, setDeleteError] = useState('')
   const createButton = useRef<HTMLButtonElement>(null)
+  const actionButton = useRef<HTMLButtonElement>(null)
+  const potsHeading = useRef<HTMLHeadingElement>(null)
+  const deleteReturnFocus = useRef<HTMLElement>(null)
 
   return (
     <section aria-labelledby="pots-title" className="flex flex-col gap-400">
       <header className="flex h-14 items-center justify-between gap-200 py-100">
-        <h1 className="text-preset-1" id="pots-title">
+        <h1 ref={potsHeading} className="text-preset-1" id="pots-title">
           Pots
         </h1>
         <Button
           ref={createButton}
-          disabled={state.status !== 'success'}
+          disabled={state.status !== 'success' || Boolean(state.fixture)}
           onClick={() => setCreating(true)}
           className="shrink-0"
-          title={state.status !== 'success' ? 'Load your pots before adding a new one' : undefined}
+          title={
+            state.status !== 'success'
+              ? 'Load your pots before adding a new one'
+              : state.status === 'success' && state.fixture
+                ? 'Reload saved pots to leave the local preview before adding a pot'
+                : undefined
+          }
         >
           + Add New Pot
         </Button>
@@ -37,14 +52,72 @@ export function PotsPage() {
             : ''}
       </p>
 
-      {creating && state.status === 'success' && (
-        <CreatePotDialog
+      {state.status === 'success' && state.fixture && (
+        <div
+          aria-live="polite"
+          className="flex flex-wrap items-center justify-between gap-200 rounded-100 bg-beige-100 p-200 text-preset-5 text-grey-500"
+        >
+          <p role="status">
+            Local UI preview: pots were loaded from the API, but edits and deletions are not saved.
+            Seeded preview balance:{' '}
+            <strong className="text-grey-900">{formatRupiah(state.fixture.currentBalance)}</strong>.
+          </p>
+          <button
+            type="button"
+            onClick={retry}
+            className="cursor-pointer font-bold text-grey-900 underline underline-offset-2 focus-visible:rounded-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-grey-900"
+          >
+            Reload saved pots
+          </button>
+        </div>
+      )}
+
+      {creating && state.status === 'success' && !state.fixture && (
+        <PotFormDialog
           usedThemes={state.pots.map((pot) => pot.theme)}
           returnFocusRef={createButton}
           onClose={() => setCreating(false)}
-          onCreated={(pot) => {
+          onSaved={(pot) => {
             addPot(pot)
             setCreating(false)
+          }}
+        />
+      )}
+
+      {editing && state.status === 'success' && (
+        <PotFormDialog
+          pot={editing}
+          usedThemes={state.pots.filter((pot) => pot.id !== editing.id).map((pot) => pot.theme)}
+          returnFocusRef={actionButton}
+          onClose={() => setEditing(null)}
+          onSaved={(pot) => {
+            editPot(pot)
+            setEditing(null)
+          }}
+        />
+      )}
+
+      {deleting && (
+        <DeletePotDialog
+          pot={deleting}
+          returnFocusRef={deleteReturnFocus}
+          error={deleteError}
+          onClose={() => {
+            setDeleting(null)
+            setDeleteError('')
+          }}
+          onConfirm={() => {
+            const result = deletePot(deleting.id)
+            if (!result.deleted) {
+              setDeleteError(
+                result.error ??
+                  'This pot is no longer available. Reload the saved pots and try again.',
+              )
+              return
+            }
+            deleteReturnFocus.current = potsHeading.current
+            setDeleting(null)
+            setDeleteError('')
           }}
         />
       )}
@@ -87,7 +160,19 @@ export function PotsPage() {
           >
             {state.pots.map((pot) => (
               <li className="min-w-0" key={pot.id}>
-                <PotCard pot={pot} />
+                <PotCard
+                  pot={pot}
+                  onEdit={(selected, trigger) => {
+                    actionButton.current = trigger
+                    setEditing(selected)
+                  }}
+                  onDelete={(selected, trigger) => {
+                    actionButton.current = trigger
+                    deleteReturnFocus.current = trigger
+                    setDeleteError('')
+                    setDeleting(selected)
+                  }}
+                />
               </li>
             ))}
           </ul>
