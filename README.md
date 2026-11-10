@@ -64,7 +64,7 @@ Initial current/income/expenses are Rp4.836.000 / Rp3.814.250 / Rp1.700.500. Fiv
 
 ## Pots: read and create
 
-Open `/pots` after starting the API and frontend. `GET /api/pots` returns persisted pots for the fixed server-side demo owner. “Add New Pot” opens an accessible, Figma-based dialog; successful creation updates the list from the saved server response and survives reload. Edit and delete actions use an explicitly labeled local UI preview until FIN-29 adds persisted mutations; add-money and withdrawal controls remain disabled until their later FINs.
+Open `/pots` after starting the API and frontend. `GET /api/pots` returns persisted pots for the fixed server-side demo owner. “Add New Pot” opens an accessible, Figma-based dialog; successful creation updates the list from the saved server response and survives reload. Edit/delete and add/withdraw actions use an explicitly labeled local UI preview until FIN-29 and FIN-30 add persisted mutations.
 
 `POST /api/pots` accepts only these fields:
 

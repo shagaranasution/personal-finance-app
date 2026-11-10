@@ -9,9 +9,11 @@ interface PotCardProps {
   pot: Pot
   onEdit: (pot: Pot, trigger: HTMLButtonElement) => void
   onDelete: (pot: Pot, trigger: HTMLButtonElement) => void
+  onAddMoney: (pot: Pot, trigger: HTMLButtonElement) => void
+  onWithdraw: (pot: Pot, trigger: HTMLButtonElement) => void
 }
 
-export function PotCard({ pot, onEdit, onDelete }: PotCardProps) {
+export function PotCard({ pot, onEdit, onDelete, onAddMoney, onWithdraw }: PotCardProps) {
   const progress = getPotProgress(pot.total, pot.target)
   const headingId = `pot-${pot.id}`
 
@@ -67,20 +69,18 @@ export function PotCard({ pot, onEdit, onDelete }: PotCardProps) {
 
       <div className="flex gap-200">
         <Button
-          disabled
           variant="secondary"
-          className="min-w-0 flex-1 disabled:opacity-100"
-          title="Adding money is not available yet"
-          aria-label={`Add money to ${pot.name} (not available yet)`}
+          className="min-w-0 flex-1"
+          onClick={(event) => onAddMoney(pot, event.currentTarget)}
+          aria-label={`Add money to ${pot.name}`}
         >
           + Add Money
         </Button>
         <Button
-          disabled
           variant="secondary"
-          className="min-w-0 flex-1 disabled:opacity-100"
-          title="Withdrawals are not available yet"
-          aria-label={`Withdraw from ${pot.name} (not available yet)`}
+          className="min-w-0 flex-1"
+          onClick={(event) => onWithdraw(pot, event.currentTarget)}
+          aria-label={`Withdraw from ${pot.name}`}
         >
           Withdraw
         </Button>

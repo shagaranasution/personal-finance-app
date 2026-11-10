@@ -2,8 +2,11 @@ import { useEffect, useState } from 'react'
 import {
   deletePotFromFixture,
   editPotInFixture,
+  movePotMoneyInFixture,
   startPotFixture,
   type PotDeletionResult,
+  type PotMovementDirection,
+  type PotMovementResult,
 } from './pot-fixture-adapter'
 import { fetchPots } from './pots-api'
 import type { Pot } from './types'
@@ -73,5 +76,25 @@ export function usePots() {
     return result
   }
 
-  return { state, retry, addPot, editPot, deletePot }
+  function movePotMoney(
+    potId: string,
+    amount: number,
+    direction: PotMovementDirection,
+  ): PotMovementResult {
+    if (state.status !== 'success') {
+      return {
+        state: { pots: [], currentBalance: 0 },
+        changed: false,
+        error: 'Your pots are not ready. Reload them and try again.',
+      }
+    }
+    const fixture = state.fixture ?? startPotFixture(state.pots)
+    const result = movePotMoneyInFixture(fixture, potId, amount, direction)
+    if (result.changed) {
+      setState({ ...state, pots: result.state.pots, fixture: result.state })
+    }
+    return result
+  }
+
+  return { state, retry, addPot, editPot, deletePot, movePotMoney }
 }
