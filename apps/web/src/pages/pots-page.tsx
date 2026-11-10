@@ -1,23 +1,33 @@
 import { useRef, useState } from 'react'
 import { PotFormDialog } from '@/features/pots/components/pot-form-dialog'
 import { DeletePotDialog } from '@/features/pots/components/delete-pot-dialog'
+import { PotMovementDialog } from '@/features/pots/components/pot-movement-dialog'
 import { Button } from '@/shared/ui/button'
 import { Card } from '@/shared/ui/card'
 import { PotCard } from '@/features/pots/components/pot-card'
 import { usePots } from '@/features/pots/use-pots'
+import {
+  FIXTURE_CURRENT_BALANCE,
+  type PotMovementDirection,
+} from '@/features/pots/pot-fixture-adapter'
 import type { Pot } from '@/features/pots/types'
 import { formatRupiah } from '@/shared/lib/money'
 
 export function PotsPage() {
-  const { state, retry, addPot, editPot, deletePot } = usePots()
+  const { state, retry, addPot, editPot, deletePot, movePotMoney } = usePots()
   const [creating, setCreating] = useState(false)
   const [editing, setEditing] = useState<Pot | null>(null)
   const [deleting, setDeleting] = useState<Pot | null>(null)
+  const [movement, setMovement] = useState<{
+    pot: Pot
+    direction: PotMovementDirection
+  } | null>(null)
   const [deleteError, setDeleteError] = useState('')
   const createButton = useRef<HTMLButtonElement>(null)
   const actionButton = useRef<HTMLButtonElement>(null)
   const potsHeading = useRef<HTMLHeadingElement>(null)
   const deleteReturnFocus = useRef<HTMLElement>(null)
+  const movementButton = useRef<HTMLButtonElement>(null)
 
   return (
     <section aria-labelledby="pots-title" className="flex flex-col gap-400">
@@ -58,8 +68,8 @@ export function PotsPage() {
           className="flex flex-wrap items-center justify-between gap-200 rounded-100 bg-beige-100 p-200 text-preset-5 text-grey-500"
         >
           <p role="status">
-            Local UI preview: pots were loaded from the API, but edits and deletions are not saved.
-            Seeded preview balance:{' '}
+            Local UI preview: pots were loaded from the API, but edits, deletions, deposits, and
+            withdrawals are not saved. Seeded preview balance:{' '}
             <strong className="text-grey-900">{formatRupiah(state.fixture.currentBalance)}</strong>.
           </p>
           <button
@@ -122,6 +132,21 @@ export function PotsPage() {
         />
       )}
 
+      {movement && state.status === 'success' && (
+        <PotMovementDialog
+          pot={movement.pot}
+          currentBalance={state.fixture?.currentBalance ?? FIXTURE_CURRENT_BALANCE}
+          direction={movement.direction}
+          returnFocusRef={movementButton}
+          onClose={() => setMovement(null)}
+          onConfirm={(amount) => {
+            const result = movePotMoney(movement.pot.id, amount, movement.direction)
+            if (result.changed) setMovement(null)
+            return result
+          }}
+        />
+      )}
+
       <div aria-busy={state.status === 'loading'}>
         {state.status === 'loading' && (
           <Card padding="compact" className="flex min-h-[317px] flex-col justify-center gap-200">
@@ -171,6 +196,14 @@ export function PotsPage() {
                     deleteReturnFocus.current = trigger
                     setDeleteError('')
                     setDeleting(selected)
+                  }}
+                  onAddMoney={(selected, trigger) => {
+                    movementButton.current = trigger
+                    setMovement({ pot: selected, direction: 'add' })
+                  }}
+                  onWithdraw={(selected, trigger) => {
+                    movementButton.current = trigger
+                    setMovement({ pot: selected, direction: 'withdraw' })
                   }}
                 />
               </li>
