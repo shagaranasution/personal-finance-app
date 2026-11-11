@@ -2,10 +2,12 @@ import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router'
 import { Card } from '@/shared/ui/card'
 import { Button } from '@/shared/ui/button'
-import { transactions, TRANSACTIONS_PER_PAGE } from '@/features/transactions/data/transactions'
+import { transactions } from '@/features/transactions/data/transactions'
 import { TransactionRow } from '@/features/transactions/components/transaction-row'
-import { IconCaretDown, IconCaretLeft, IconCaretRight } from '@/shared/components/icons'
+import { IconCaretDown } from '@/shared/components/icons'
 import { IconFilterMobile, IconSearch, IconSortMobile } from '@/shared/components/icons'
+import { paginateItems } from '@/shared/lib/pagination'
+import { Pagination } from '@/shared/ui/pagination'
 import {
   getVisibleTransactions,
   isTransactionCategory,
@@ -15,11 +17,6 @@ import {
   type TransactionCategory,
   type TransactionSort,
 } from '@/features/transactions/transaction-query'
-
-const pageButtons = (currentPage: number, pageCount: number) => {
-  const visiblePages = new Set([1, pageCount, currentPage - 1, currentPage, currentPage + 1])
-  return [...visiblePages].filter((page) => page >= 1 && page <= pageCount).sort((a, b) => a - b)
-}
 
 export function TransactionsPage() {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -37,15 +34,14 @@ export function TransactionsPage() {
     () => getVisibleTransactions(transactions, search, category, sort),
     [search, category, sort],
   )
-  const pageCount = Math.ceil(filteredTransactions.length / TRANSACTIONS_PER_PAGE)
-  const safePage = Math.min(page, Math.max(pageCount, 1))
-  const firstIndex = (safePage - 1) * TRANSACTIONS_PER_PAGE
-  const pageTransactions = filteredTransactions.slice(
-    firstIndex,
-    firstIndex + TRANSACTIONS_PER_PAGE,
-  )
-  const firstRecord = filteredTransactions.length === 0 ? 0 : firstIndex + 1
-  const lastRecord = Math.min(firstIndex + TRANSACTIONS_PER_PAGE, filteredTransactions.length)
+  const pagination = paginateItems(filteredTransactions, page)
+  const {
+    items: pageTransactions,
+    page: safePage,
+    pageCount,
+    firstItem: firstRecord,
+    lastItem: lastRecord,
+  } = pagination
 
   useEffect(() => {
     if (
@@ -203,58 +199,12 @@ export function TransactionsPage() {
                 ))}
               </ul>
 
-              <nav
-                aria-label="Transaction pages"
-                className="mt-300 flex items-center justify-between gap-100 pt-250 tablet:border-t tablet:border-grey-100"
-              >
-                <Button
-                  aria-label="Previous page"
-                  className="flex items-center gap-100 px-150 py-150 tablet:px-200"
-                  disabled={safePage === 1}
-                  onClick={() => changePage(Math.max(1, safePage - 1))}
-                  variant="secondary"
-                >
-                  <IconCaretLeft aria-hidden="true" />
-                  <span className="hidden tablet:inline">Prev</span>
-                </Button>
-
-                <ol className="flex list-none items-center gap-50 p-0">
-                  {pageButtons(safePage, pageCount).map((pageNumber, index, pages) => (
-                    <li className="flex items-center gap-50" key={pageNumber}>
-                      {index > 0 && pages[index - 1] < pageNumber - 1 && (
-                        <span aria-hidden="true" className="px-50 text-grey-500">
-                          …
-                        </span>
-                      )}
-                      <button
-                        aria-current={pageNumber === safePage ? 'page' : undefined}
-                        aria-label={`Page ${pageNumber}`}
-                        className={[
-                          'size-9 rounded-100 text-preset-5-bold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-grey-900',
-                          pageNumber === safePage
-                            ? 'bg-grey-900 text-white'
-                            : 'text-grey-900 hover:bg-beige-100',
-                        ].join(' ')}
-                        onClick={() => changePage(pageNumber)}
-                        type="button"
-                      >
-                        {pageNumber}
-                      </button>
-                    </li>
-                  ))}
-                </ol>
-
-                <Button
-                  aria-label="Next page"
-                  className="flex items-center gap-100 px-150 py-150 tablet:px-200"
-                  disabled={safePage === pageCount}
-                  onClick={() => changePage(Math.min(pageCount, safePage + 1))}
-                  variant="secondary"
-                >
-                  <span className="hidden tablet:inline">Next</span>
-                  <IconCaretRight aria-hidden="true" />
-                </Button>
-              </nav>
+              <Pagination
+                label="Transaction"
+                page={safePage}
+                pageCount={pageCount}
+                onPageChange={changePage}
+              />
             </>
           ) : (
             <div className="rounded-100 bg-beige-100 px-200 py-500 text-center">

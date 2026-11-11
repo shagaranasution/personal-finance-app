@@ -10,5 +10,3 @@ export const transactions: Transaction[] = [...(transactionData as Transaction[]
   (left, right) =>
     Date.parse(right.date) - Date.parse(left.date) || left.id.localeCompare(right.id),
 )
-
-export const TRANSACTIONS_PER_PAGE = 10
