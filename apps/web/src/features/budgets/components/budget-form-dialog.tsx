@@ -184,6 +184,8 @@ export function BudgetFormDialog({
               label: option,
               disabled: usedCategories.includes(option),
             }))}
+            menuPosition="below"
+            menuClassName="h-[180px]"
             disabled={noCategoriesAvailable || noThemesAvailable}
             error={errors.category}
             buttonRef={categoryButton}
