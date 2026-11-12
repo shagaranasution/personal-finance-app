@@ -1,4 +1,4 @@
-import { MAX_RUPIAH } from '@/shared/lib/money'
+import { MAX_RUPIAH } from '../../shared/lib/money.ts'
 import type { Pot } from './types'
 
 export interface PotFixtureState {
