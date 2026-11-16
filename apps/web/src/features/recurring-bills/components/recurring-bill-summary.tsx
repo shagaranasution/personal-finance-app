@@ -1,4 +1,5 @@
 import { IconRecurringBills } from '@/shared/components/icons'
+import type { ReactNode } from 'react'
 import { Card } from '@/shared/ui/card'
 import { formatRupiah } from '@/shared/lib/money'
 import type { RecurringBillSummary as Summary } from '../recurring-bill-query'
@@ -19,7 +20,15 @@ export function RecurringBillTotalCard({ totalBills }: { totalBills: Summary['to
   )
 }
 
-export function RecurringBillSummaryCard({ summary }: { summary: Summary }) {
+export function RecurringBillSummaryCard({
+  summary,
+  title = 'Summary',
+  headerAction,
+}: {
+  summary: Summary
+  title?: string
+  headerAction?: ReactNode
+}) {
   const rows = [
     { label: 'Paid Bills', ...summary.paidBills, attention: false },
     { label: 'Total Upcoming', ...summary.upcomingBills, attention: false },
@@ -28,7 +37,10 @@ export function RecurringBillSummaryCard({ summary }: { summary: Summary }) {
 
   return (
     <Card padding="compact" className="flex flex-col">
-      <h2 className="mb-150 text-preset-3">Summary</h2>
+      <header className="mb-150 flex items-center justify-between gap-200">
+        <h2 className="text-preset-3">{title}</h2>
+        {headerAction}
+      </header>
       <ul aria-label="Recurring bill summary" className="list-none p-0">
         {rows.map((row) => (
           <li
