@@ -189,6 +189,8 @@ export function BudgetFormDialog({
             disabled={noCategoriesAvailable || noThemesAvailable}
             error={errors.category}
             buttonRef={categoryButton}
+            portalMenu
+            portalContainerRef={dialog}
             onChange={updateCategory}
           />
 
@@ -212,6 +214,7 @@ export function BudgetFormDialog({
 
           <ThemeSelect
             buttonRef={themeButton}
+            portalContainerRef={dialog}
             value={theme}
             usedThemes={usedThemes}
             disabled={noCategoriesAvailable || noThemesAvailable}

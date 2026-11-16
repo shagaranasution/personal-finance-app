@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { NavLink, Outlet } from 'react-router'
 import { IconMinimizeMenu } from '@/shared/components/icons/IconMinimizeMenu'
 import { navigationItems, type NavigationItem } from '@/shared/navigation/navigation-items'
+import { IconExpandMenu } from '../components/icons/IconExpandMenu'
 
 interface NavigationLinkProps {
   item: NavigationItem
@@ -18,10 +19,10 @@ function NavigationLink({ item, collapsed = false, compact = false }: Navigation
       className={({ isActive }) => {
         if (compact) {
           return [
-            'flex h-full flex-1 items-center justify-center border-t-4 border-transparent text-grey-300',
+            'flex h-full flex-1 items-center justify-center border-b-4 border-transparent text-grey-300',
             'focus-visible:outline-2 focus-visible:outline-offset-[-4px] focus-visible:outline-white',
             'tablet:flex-col tablet:gap-100 tablet:pt-150',
-            isActive ? 'border-green bg-beige-100 tablet:text-grey-900' : '',
+            isActive ? 'border-green text-grey-900 tablet:bg-beige-100' : '',
           ].join(' ')
         }
 
@@ -93,14 +94,14 @@ function DesktopSidebar() {
       <button
         aria-expanded={!collapsed}
         className={[
-          'mt-auto flex h-14 items-center text-grey-300 hover:bg-grey-500/20',
+          'mt-auto flex h-14 cursor-pointer items-center text-grey-300 hover:bg-grey-500/20',
           'focus-visible:outline-2 focus-visible:outline-offset-[-4px] focus-visible:outline-white',
           collapsed ? 'justify-center px-200' : 'gap-200 px-400',
         ].join(' ')}
         onClick={() => setCollapsed((isCollapsed) => !isCollapsed)}
         type="button"
       >
-        <IconMinimizeMenu />
+        {collapsed ? <IconExpandMenu /> : <IconMinimizeMenu />}
         <span className={collapsed ? 'sr-only' : 'text-preset-3'}>Minimize Menu</span>
         <span className="sr-only">{collapsed ? 'Expand navigation' : 'Collapse navigation'}</span>
       </button>

@@ -38,9 +38,12 @@ export function BudgetOverviewCard({ budgets }: { budgets: readonly BudgetSummar
             </div>
           </div>
 
-          <ul aria-label="Budget categories and limits" className="min-w-0 flex-1 list-none p-0">
+          <ul
+            aria-label="Budget categories and limits"
+            className="grid min-w-0 w-full flex-1 list-none grid-cols-2 gap-x-200 gap-y-100 p-0 tablet:grid-cols-1"
+          >
             {budgets.map((budget) => (
-              <li className="flex min-w-0 items-center gap-100 py-100" key={budget.id}>
+              <li className="flex min-w-0 items-center gap-100" key={budget.id}>
                 <span
                   aria-hidden="true"
                   className="h-6 w-1 shrink-0 rounded-50"
