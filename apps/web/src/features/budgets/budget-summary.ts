@@ -1,4 +1,5 @@
 import type { Transaction } from '@/features/transactions/types'
+import { MAX_RUPIAH } from '@/shared/lib/money'
 import type { Budget, BudgetSummary } from './types'
 
 const AUGUST_START = Date.parse('2024-08-01T00:00:00.000Z')
@@ -34,17 +35,28 @@ export function summarizeBudgets(budgets: Budget[], transactions: Transaction[])
   })
 }
 
-export function getBudgetTotals(summaries: BudgetSummary[]) {
-  return summaries.reduce(
+export function getBudgetTotals(summaries: readonly BudgetSummary[]) {
+  const totals = summaries.reduce(
     (totals, budget) => ({
       spent: totals.spent + budget.spent,
       maximum: totals.maximum + budget.maximum,
     }),
     { spent: 0, maximum: 0 },
   )
+
+  if (
+    !Number.isSafeInteger(totals.spent) ||
+    !Number.isSafeInteger(totals.maximum) ||
+    totals.spent > MAX_RUPIAH ||
+    totals.maximum > MAX_RUPIAH
+  ) {
+    throw new RangeError('Budget totals exceed the supported rupiah limit')
+  }
+
+  return totals
 }
 
-export function getBudgetChartBackground(summaries: BudgetSummary[], totalSpent: number) {
+export function getBudgetChartBackground(summaries: readonly BudgetSummary[], totalSpent: number) {
   if (totalSpent === 0) return 'conic-gradient(var(--color-grey-100) 0deg 360deg)'
 
   let accumulatedPercentage = 0
