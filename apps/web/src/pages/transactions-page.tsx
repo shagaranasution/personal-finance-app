@@ -1,13 +1,13 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, type RefObject } from 'react'
 import { useSearchParams } from 'react-router'
 import { Card } from '@/shared/ui/card'
 import { Button } from '@/shared/ui/button'
 import { transactions } from '@/features/transactions/data/transactions'
 import { TransactionRow } from '@/features/transactions/components/transaction-row'
-import { IconCaretDown } from '@/shared/components/icons'
 import { IconFilterMobile, IconSearch, IconSortMobile } from '@/shared/components/icons'
 import { paginateItems } from '@/shared/lib/pagination'
 import { Pagination } from '@/shared/ui/pagination'
+import { DropdownSelect } from '@/shared/ui/dropdown-select'
 import {
   getVisibleTransactions,
   isTransactionCategory,
@@ -20,7 +20,10 @@ import {
 
 export function TransactionsPage() {
   const [searchParams, setSearchParams] = useSearchParams()
-  const [mobilePanel, setMobilePanel] = useState<'sort' | 'category' | null>(null)
+  const sortDesktopButton = useRef<HTMLButtonElement>(null)
+  const sortMobileButton = useRef<HTMLButtonElement>(null)
+  const categoryDesktopButton = useRef<HTMLButtonElement>(null)
+  const categoryMobileButton = useRef<HTMLButtonElement>(null)
   const search = searchParams.get('search') ?? ''
   const categoryValue = searchParams.get('category')
   const category: TransactionCategory | null = isTransactionCategory(categoryValue)
@@ -89,49 +92,78 @@ export function TransactionsPage() {
     </label>
   )
 
-  const categorySelect = (id: string) => (
-    <label className="flex min-w-0 justify-end items-center gap-100">
-      <span className="text-preset-5 text-grey-500">Category</span>
-      <span className="relative">
-        <select
-          aria-label="Filter by category"
-          className="h-[42px] w-full appearance-none rounded-100 border border-beige-500 bg-white pl-200 pr-500 text-preset-4 text-grey-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-grey-900"
-          id={id}
-          onChange={(event) => updateFilters({ category: event.target.value || null })}
-          value={category ?? ''}
-        >
-          <option value="">All Transactions</option>
-          {transactionCategories.map((option) => (
-            <option key={option} value={option}>
-              {option}
-            </option>
-          ))}
-        </select>
-        <IconCaretDown className="pointer-events-none absolute right-200 top-1/2 -translate-y-1/2" />
-      </span>
-    </label>
+  const categoryOptions = [
+    { value: '', label: 'All Transactions' },
+    ...transactionCategories.map((option) => ({ value: option, label: option })),
+  ]
+
+  const categorySelect = (buttonRef: RefObject<HTMLButtonElement | null>, mobile = false) => (
+    <DropdownSelect
+      className={mobile ? 'w-full' : 'w-[245px]'}
+      label="Category"
+      labelPosition={mobile ? 'above' : 'inline'}
+      value={category ?? ''}
+      options={categoryOptions}
+      buttonRef={buttonRef}
+      buttonClassName="h-[42px]"
+      menuPosition="below"
+      portalMenu
+      onChange={(value) => updateFilters({ category: value || null })}
+    />
   )
 
-  const sortSelect = (id: string) => (
-    <label className="flex min-w-0 justify-end items-center gap-100">
-      <span className="text-preset-5 text-grey-500">Sort by</span>
-      <span className="relative">
-        <select
-          aria-label="Sort transactions"
-          className="h-[42px] w-full appearance-none rounded-100 border border-beige-500 bg-white pl-200 pr-500 text-preset-4 text-grey-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-grey-900"
-          id={id}
-          onChange={(event) => updateFilters({ sort: event.target.value })}
-          value={sort}
-        >
-          {transactionSorts.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-        <IconCaretDown className="pointer-events-none absolute right-200 top-1/2 -translate-y-1/2" />
-      </span>
-    </label>
+  const sortSelect = (buttonRef: RefObject<HTMLButtonElement | null>, mobile = false) => (
+    <DropdownSelect
+      className={mobile ? 'w-full' : 'w-[170px]'}
+      label="Sort by"
+      labelPosition={mobile ? 'above' : 'inline'}
+      value={sort}
+      options={transactionSorts}
+      buttonRef={buttonRef}
+      buttonClassName="h-[42px]"
+      menuPosition="below"
+      portalMenu
+      onChange={(value) => updateFilters({ sort: value })}
+    />
+  )
+
+  const mobileSortSelect = (
+    <DropdownSelect
+      className="shrink-0"
+      label="Sort by"
+      labelClassName="sr-only"
+      value={sort}
+      options={transactionSorts}
+      buttonRef={sortMobileButton}
+      buttonClassName="!size-8 !min-h-8 !border-0 !p-0 !justify-center"
+      menuPosition="below"
+      menuClassName="min-w-[160px]"
+      portalMenu
+      portalMenuWidth={160}
+      portalMenuAlign="start"
+      showCaret={false}
+      renderValue={() => <IconSortMobile aria-hidden="true" />}
+      onChange={(value) => updateFilters({ sort: value })}
+    />
+  )
+  const mobileCategorySelect = (
+    <DropdownSelect
+      className="shrink-0"
+      label="Category"
+      labelClassName="sr-only"
+      value={category ?? ''}
+      options={categoryOptions}
+      buttonRef={categoryMobileButton}
+      buttonClassName="!size-8 !min-h-8 !border-0 !p-0 !justify-center"
+      menuPosition="below"
+      menuClassName="min-w-[240px]"
+      portalMenu
+      portalMenuWidth={240}
+      portalMenuAlign="end"
+      showCaret={false}
+      renderValue={() => <IconFilterMobile aria-hidden="true" />}
+      onChange={(value) => updateFilters({ category: value || null })}
+    />
   )
 
   return (
@@ -147,40 +179,15 @@ export function TransactionsPage() {
           <div className="mb-300 hidden w-full items-end gap-300 tablet:flex tablet:justify-between">
             <div className="w-full min-w-[161px] max-w-[320px]">{searchField}</div>
             <div className="flex">
-              <div className="w-[170px]">{sortSelect('transaction-sort-desktop')}</div>
-              <div className="w-[245px]">{categorySelect('transaction-category-desktop')}</div>
+              <div className="w-[170px]">{sortSelect(sortDesktopButton)}</div>
+              <div className="w-[245px]">{categorySelect(categoryDesktopButton)}</div>
             </div>
           </div>
           <div className="mb-300 flex w-full items-center gap-300 tablet:hidden">
             {searchField}
-            <button
-              aria-expanded={mobilePanel === 'sort'}
-              aria-label="Sort transactions"
-              className="grid size-5 shrink-0 place-items-center focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-grey-900"
-              onClick={() => setMobilePanel((current) => (current === 'sort' ? null : 'sort'))}
-              type="button"
-            >
-              <IconSortMobile />
-            </button>
-            <button
-              aria-expanded={mobilePanel === 'category'}
-              aria-label="Filter transactions by category"
-              className="grid size-5 shrink-0 place-items-center focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-grey-900"
-              onClick={() =>
-                setMobilePanel((current) => (current === 'category' ? null : 'category'))
-              }
-              type="button"
-            >
-              <IconFilterMobile />
-            </button>
+            {mobileSortSelect}
+            {mobileCategorySelect}
           </div>
-          {mobilePanel && (
-            <div className="mb-300 grid w-full grid-cols-1 gap-200 rounded-100 bg-beige-100 p-200 tablet:hidden">
-              {mobilePanel === 'sort'
-                ? sortSelect('transaction-sort-mobile')
-                : categorySelect('transaction-category-mobile')}
-            </div>
-          )}
 
           {pageTransactions.length > 0 ? (
             <>

@@ -208,6 +208,7 @@ export function PotFormDialog({ usedThemes, pot, returnFocusRef, onClose, onSave
           />
           <ThemeSelect
             buttonRef={themeButton}
+            portalContainerRef={dialog}
             value={theme}
             usedThemes={usedThemes}
             disabled={pending || exhausted}

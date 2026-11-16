@@ -22,6 +22,7 @@ export function DeleteBudgetDialog({
 
   useEffect(() => {
     const element = dialog.current!
+    const trigger = returnFocusRef.current
     const previousOverflow = document.body.style.overflow
     element.showModal()
     cancelButton.current?.focus()
@@ -29,7 +30,7 @@ export function DeleteBudgetDialog({
     return () => {
       element.close()
       document.body.style.overflow = previousOverflow
-      returnFocusRef.current?.focus()
+      trigger?.focus()
     }
   }, [returnFocusRef])
 

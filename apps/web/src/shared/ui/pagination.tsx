@@ -41,7 +41,7 @@ export function Pagination({ page, pageCount, label, onPageChange }: PaginationP
               aria-current={pageNumber === page ? 'page' : undefined}
               aria-label={`Page ${pageNumber}`}
               className={[
-                'size-9 rounded-100 text-preset-5-bold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-grey-900',
+                'size-9 cursor-pointer rounded-100 text-preset-5-bold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-grey-900',
                 pageNumber === page ? 'bg-grey-900 text-white' : 'text-grey-900 hover:bg-beige-100',
               ].join(' ')}
               onClick={() => onPageChange(pageNumber)}

@@ -42,10 +42,28 @@ export function BudgetActions({ budget, onEdit, onDelete }: BudgetActionsProps) 
         if (!event.currentTarget.contains(event.relatedTarget)) setOpen(false)
       }}
       onKeyDown={(event) => {
-        if (event.key === 'Escape' && open) {
+        if (!open) return
+        if (event.key === 'Escape') {
           event.preventDefault()
           setOpen(false)
           container.current?.querySelector<HTMLButtonElement>('[aria-haspopup="menu"]')?.focus()
+          return
+        }
+        if (['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) {
+          const items = container.current?.querySelectorAll<HTMLButtonElement>('[role="menuitem"]')
+          if (!items?.length) return
+          const currentIndex = Array.from(items).indexOf(
+            document.activeElement as HTMLButtonElement,
+          )
+          const nextIndex =
+            event.key === 'Home'
+              ? 0
+              : event.key === 'End'
+                ? items.length - 1
+                : (currentIndex + (event.key === 'ArrowDown' ? 1 : -1) + items.length) %
+                  items.length
+          event.preventDefault()
+          items[nextIndex]?.focus()
         }
       }}
     >
@@ -69,7 +87,7 @@ export function BudgetActions({ budget, onEdit, onDelete }: BudgetActionsProps) 
             ref={editButton}
             type="button"
             role="menuitem"
-            className="border-b border-grey-100 py-100 text-left text-preset-5-bold hover:text-green focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-grey-900"
+            className="cursor-pointer border-b border-grey-100 py-100 text-left text-preset-5-bold hover:text-green focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-grey-900"
             onClick={() => choose('edit')}
           >
             Edit Budget
@@ -77,7 +95,7 @@ export function BudgetActions({ budget, onEdit, onDelete }: BudgetActionsProps) 
           <button
             type="button"
             role="menuitem"
-            className="py-100 text-left text-preset-5-bold text-red hover:text-red-accessible focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-grey-900"
+            className="cursor-pointer py-100 text-left text-preset-5-bold text-red hover:text-red-accessible focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-grey-900"
             onClick={() => choose('delete')}
           >
             Delete Budget

@@ -9,6 +9,7 @@ interface ThemeSelectProps {
   disabled: boolean
   error?: string
   buttonRef: RefObject<HTMLButtonElement | null>
+  portalContainerRef?: RefObject<HTMLElement | null>
   onChange: (value: string) => void
 }
 
@@ -18,6 +19,7 @@ export function ThemeSelect({
   disabled,
   error,
   buttonRef,
+  portalContainerRef,
   onChange,
 }: ThemeSelectProps) {
   const options = themeOptions.map((theme) => ({
@@ -34,6 +36,8 @@ export function ThemeSelect({
       error={error}
       emptyLabel="No themes available"
       buttonRef={buttonRef}
+      portalMenu
+      portalContainerRef={portalContainerRef}
       renderValue={(theme) => (
         <>
           <span

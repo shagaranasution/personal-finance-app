@@ -1,4 +1,12 @@
-import { useEffect, useId, useRef, useState, type ReactNode, type RefObject } from 'react'
+import {
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type ReactNode,
+  type RefObject,
+} from 'react'
 import { createPortal } from 'react-dom'
 import { IconCaretDown } from '../components/icons'
 
@@ -23,6 +31,7 @@ interface DropdownSelectProps<Option extends DropdownSelectOption> {
   menuPosition?: 'above' | 'below'
   menuClassName?: string
   portalMenu?: boolean
+  portalContainerRef?: RefObject<HTMLElement | null>
   portalMenuWidth?: number
   portalMenuAlign?: 'start' | 'end'
   showCaret?: boolean
@@ -50,6 +59,7 @@ export function DropdownSelect<Option extends DropdownSelectOption>({
   labelPosition = 'above',
   menuPosition = 'above',
   portalMenu = false,
+  portalContainerRef,
   portalMenuWidth,
   portalMenuAlign = 'start',
   showCaret = true,
@@ -66,6 +76,7 @@ export function DropdownSelect<Option extends DropdownSelectOption>({
     width: number
     maxHeight: number
   }>()
+  const [portalRoot, setPortalRoot] = useState<HTMLElement | null>(null)
   const selected = options.find((option) => option.value === value)
   const available = options.flatMap((option, index) => (option.disabled ? [] : [index]))
 
@@ -85,42 +96,62 @@ export function DropdownSelect<Option extends DropdownSelectOption>({
     return () => document.removeEventListener('pointerdown', closeOutside)
   }, [open])
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!open || !portalMenu) return
 
     const updatePosition = () => {
       const trigger = buttonRef.current
       if (!trigger) return
       const rect = trigger.getBoundingClientRect()
-      const viewportPadding = 8
+      const boundary = {
+        top: 8,
+        right: window.innerWidth - 8,
+        bottom: window.innerHeight - 8,
+        left: 8,
+      }
+      const portalBoundary = portalContainerRef?.current ?? null
+      let clippingAncestor = portalBoundary ? trigger.parentElement : null
+      while (
+        clippingAncestor &&
+        clippingAncestor !== document.body &&
+        clippingAncestor !== document.documentElement
+      ) {
+        const style = window.getComputedStyle(clippingAncestor)
+        const clipsX = ['auto', 'clip', 'hidden', 'scroll'].includes(style.overflowX)
+        const clipsY = ['auto', 'clip', 'hidden', 'scroll'].includes(style.overflowY)
+        if (clipsX || clipsY) {
+          const ancestorRect = clippingAncestor.getBoundingClientRect()
+          const left = ancestorRect.left + clippingAncestor.clientLeft + 8
+          const top = ancestorRect.top + clippingAncestor.clientTop + 8
+          const right = left + clippingAncestor.clientWidth - 16
+          const bottom = top + clippingAncestor.clientHeight - 16
+          if (clipsX) {
+            boundary.left = Math.max(boundary.left, left)
+            boundary.right = Math.min(boundary.right, right)
+          }
+          if (clipsY) {
+            boundary.top = Math.max(boundary.top, top)
+            boundary.bottom = Math.min(boundary.bottom, bottom)
+          }
+        }
+        if (clippingAncestor === portalBoundary) break
+        clippingAncestor = clippingAncestor.parentElement
+      }
       const gap = 8
-      const availableBelow = window.innerHeight - rect.bottom - gap - viewportPadding
-      const availableAbove = rect.top - gap - viewportPadding
-      const showBelow =
-        menuPosition === 'below'
-          ? availableBelow >= Math.min(240, availableAbove) || availableBelow >= 160
-          : availableBelow >= Math.min(240, availableAbove)
-      const maxHeight = Math.max(
-        96,
-        Math.min(300, Math.floor(showBelow ? availableBelow : availableAbove)),
+      const availableBelow = Math.max(0, boundary.bottom - rect.bottom - gap)
+      const availableAbove = Math.max(0, rect.top - boundary.top - gap)
+      const showAbove = availableAbove > availableBelow
+      const availableSpace = showAbove ? availableAbove : availableBelow
+      const maxHeight = Math.min(300, Math.floor(availableSpace))
+      const width = Math.min(
+        Math.max(rect.width, portalMenuWidth ?? rect.width),
+        Math.max(0, boundary.right - boundary.left),
       )
+      const desiredLeft = portalMenuAlign === 'end' ? rect.right - width : rect.left
       setPortalStyle({
-        left: Math.max(
-          viewportPadding,
-          Math.min(
-            portalMenuAlign === 'end'
-              ? rect.right - Math.max(rect.width, portalMenuWidth ?? rect.width)
-              : rect.left,
-            window.innerWidth -
-              Math.max(rect.width, portalMenuWidth ?? rect.width) -
-              viewportPadding,
-          ),
-        ),
-        top: showBelow ? rect.bottom + gap : Math.max(viewportPadding, rect.top - gap - maxHeight),
-        width: Math.min(
-          Math.max(rect.width, portalMenuWidth ?? rect.width),
-          window.innerWidth - viewportPadding * 2,
-        ),
+        left: Math.max(boundary.left, Math.min(desiredLeft, boundary.right - width)),
+        top: showAbove ? rect.top - gap - maxHeight : rect.bottom + gap,
+        width,
         maxHeight,
       })
     }
@@ -132,11 +163,39 @@ export function DropdownSelect<Option extends DropdownSelectOption>({
       window.removeEventListener('resize', updatePosition)
       window.removeEventListener('scroll', updatePosition, true)
     }
-  }, [buttonRef, menuPosition, open, portalMenu, portalMenuAlign, portalMenuWidth])
+  }, [buttonRef, open, portalContainerRef, portalMenu, portalMenuAlign, portalMenuWidth])
+
+  function moveFocusFromTrigger(direction: -1 | 1) {
+    const scope = portalContainerRef?.current ?? document.body
+    const focusable = Array.from(
+      scope.querySelectorAll<HTMLElement>(
+        'a[href], button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])',
+      ),
+    ).filter(
+      (element) =>
+        element.tabIndex >= 0 &&
+        element.getClientRects().length > 0 &&
+        window.getComputedStyle(element).visibility !== 'hidden',
+    )
+    const trigger = buttonRef.current
+    const triggerIndex = trigger ? focusable.indexOf(trigger) : -1
+    const next = triggerIndex === -1 ? undefined : focusable[triggerIndex + direction]
+    if (next) {
+      next.focus()
+      return
+    }
+    if (scope instanceof HTMLDialogElement) {
+      focusable[direction < 0 ? focusable.length - 1 : 0]?.focus()
+    } else {
+      buttonRef.current?.focus()
+    }
+  }
 
   function openMenu() {
     const selectedIndex = options.findIndex((option) => option.value === value)
     setActive(available.includes(selectedIndex) ? selectedIndex : (available[0] ?? 0))
+    setPortalStyle(undefined)
+    if (portalMenu) setPortalRoot(portalContainerRef?.current ?? document.body)
     setOpen(true)
   }
 
@@ -178,7 +237,6 @@ export function DropdownSelect<Option extends DropdownSelectOption>({
             aria-selected={selectedOption}
             disabled={option.disabled}
             tabIndex={-1}
-            className="flex w-full items-center justify-between gap-150 border-b border-grey-100 py-150 text-left text-preset-4 first:pt-0 last:border-0 last:pb-0 hover:text-green focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-grey-900 disabled:cursor-not-allowed disabled:text-grey-500"
             onClick={() => {
               onChange(option.value)
               closeMenu()
@@ -200,7 +258,14 @@ export function DropdownSelect<Option extends DropdownSelectOption>({
                 event.stopPropagation()
                 closeMenu()
               }
+              if (event.key === 'Tab') {
+                event.preventDefault()
+                event.stopPropagation()
+                setOpen(false)
+                moveFocusFromTrigger(event.shiftKey ? -1 : 1)
+              }
             }}
+            className="flex w-full cursor-pointer items-center justify-between gap-150 border-b border-grey-100 py-150 text-left text-preset-4 first:pt-0 last:border-0 last:pb-0 hover:text-green focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-grey-900 disabled:cursor-not-allowed disabled:text-grey-500"
           >
             {renderOption?.(option, selectedOption) ?? option.label}
           </button>
@@ -230,12 +295,12 @@ export function DropdownSelect<Option extends DropdownSelectOption>({
           role="combobox"
           aria-labelledby={`${id}-label ${id}-value`}
           aria-expanded={open}
-          aria-controls={`${id}-options`}
+          aria-controls={open ? `${id}-options` : undefined}
           aria-haspopup="listbox"
           aria-invalid={error ? true : undefined}
           aria-describedby={error ? `${id}-error` : undefined}
           disabled={disabled || available.length === 0}
-          className={`flex h-[45px] w-full items-center justify-between gap-200 rounded-100 border px-250 py-150 text-left text-preset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-grey-900 disabled:cursor-not-allowed disabled:border-grey-300 disabled:bg-grey-100 disabled:text-grey-500 ${error ? 'border-red-accessible' : 'border-beige-500 hover:border-grey-900'} ${buttonClassName}`}
+          className={`flex h-[45px] w-full cursor-pointer items-center justify-between gap-200 rounded-100 border px-250 py-150 text-left text-preset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-grey-900 disabled:cursor-not-allowed disabled:border-grey-300 disabled:bg-grey-100 disabled:text-grey-500 ${error ? 'border-red-accessible' : 'border-beige-500 hover:border-grey-900'} ${buttonClassName}`}
           onClick={() => (open ? closeMenu() : openMenu())}
           onKeyDown={(event) => {
             if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
@@ -268,7 +333,7 @@ export function DropdownSelect<Option extends DropdownSelectOption>({
           {error}
         </p>
       )}
-      {portalMenu && menu && createPortal(menu, document.body)}
+      {portalMenu && menu && createPortal(menu, portalRoot ?? document.body)}
     </div>
   )
 }
