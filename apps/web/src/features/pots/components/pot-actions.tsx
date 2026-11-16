@@ -52,7 +52,9 @@ export function PotActions({ pot, onEdit, onDelete }: PotActionsProps) {
         if (['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) {
           const items = container.current?.querySelectorAll<HTMLButtonElement>('[role="menuitem"]')
           if (!items?.length) return
-          const currentIndex = Array.from(items).indexOf(document.activeElement as HTMLButtonElement)
+          const currentIndex = Array.from(items).indexOf(
+            document.activeElement as HTMLButtonElement,
+          )
           const nextIndex =
             event.key === 'Home'
               ? 0

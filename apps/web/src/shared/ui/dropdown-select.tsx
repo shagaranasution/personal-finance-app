@@ -147,8 +147,7 @@ export function DropdownSelect<Option extends DropdownSelectOption>({
         Math.max(rect.width, portalMenuWidth ?? rect.width),
         Math.max(0, boundary.right - boundary.left),
       )
-      const desiredLeft =
-        portalMenuAlign === 'end' ? rect.right - width : rect.left
+      const desiredLeft = portalMenuAlign === 'end' ? rect.right - width : rect.left
       setPortalStyle({
         left: Math.max(boundary.left, Math.min(desiredLeft, boundary.right - width)),
         top: showAbove ? rect.top - gap - maxHeight : rect.bottom + gap,
